@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Anotacao, Titulo } from "@/components/ui";
+import { Anotacao, GradeAtributos, Titulo } from "@/components/ui";
+import { ATRIBUTOS } from "@/lib/atributos";
 import { dois, milhar, xpParaProximoNivel } from "@/lib/regras";
 import { anotar, salvarDiagnostico } from "./actions";
 
@@ -13,6 +14,7 @@ export type PacienteResumo = {
   ala: string;
   xp: number;
   pontos: number;
+  atributos: { sigla: string; nome: string; valor: number }[];
   diagnostico: string;
   notas: string[];
 };
@@ -84,6 +86,11 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
                       <b className="text-[13px]">{milhar(p.xp)} / {milhar(xpParaProximoNivel(p.nivel))}</b></div>
                     <div className="px-0.5 py-1.5"><span className="rotulo">PONTOS</span><br /><b className="text-lg">{p.pontos}</b></div>
                   </div>
+                  <div className="flex flex-col gap-1.5" role="group" aria-label={`Atributos de ${p.nome}`}>
+                    <span className="rotulo">ATRIBUTOS · TOTAL {p.atributos.reduce((s, a) => s + a.valor, 0)}</span>
+                    <GradeAtributos itens={p.atributos} />
+                    <span className="text-[11px] opacity-75">{p.pontos > 0 ? `${p.pontos} ponto${p.pontos > 1 ? "s" : ""} ainda não distribuído${p.pontos > 1 ? "s" : ""}.` : "Todos os pontos distribuídos."}</span>
+                  </div>
                   <p className="m-0 text-[11px] leading-snug opacity-75">
                     XP e pontos vêm apenas das regras do jogo: missões, acesso diário e primeira visita a uma ala.
                   </p>
@@ -120,7 +127,11 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
             </button>
             {sel === "0112" && (
               <div className="border-[1.5px] border-t-0 border-dashed border-tinta bg-papel-campo p-3 text-[13px] leading-snug text-carimbo">
-                Prontuário sem internação registrada. Edição bloqueada. Último acesso: hoje, 03:17.
+                <p className="m-0">Prontuário sem internação registrada. Edição bloqueada. Último acesso: hoje, 03:17.</p>
+                <div className="mt-2.5 flex flex-col gap-1.5 text-tinta">
+                  <span className="rotulo">ATRIBUTOS</span>
+                  <GradeAtributos itens={ATRIBUTOS.map((a) => ({ sigla: a.sigla, valor: "??" }))} />
+                </div>
               </div>
             )}
           </div>
