@@ -4,6 +4,7 @@ import { alaAcessivel, listarAlas } from "@/lib/alas";
 import { pacienteAtual } from "@/lib/dal";
 import { listarHistorico } from "@/lib/historico";
 import { dataCurta, diaBrasilia, dois, horaBrasilia, milhar } from "@/lib/regras";
+import { anotacaoDoDia, previsaoDeAmanha } from "./fantasma";
 import { LivroOcorrencias, type DiaVisto } from "./LivroOcorrencias";
 
 async function Livro() {
@@ -34,13 +35,20 @@ async function Livro() {
       xp: r.xp ? `+${milhar(r.xp)} XP` : undefined,
     });
   }
+  // O 0112 deixa uma anotação por dia às 03:17 (hoje, só depois desse horário). Sem filtro próprio: aparece em TODOS.
+  const passou0317 = horaBrasilia(agora) >= "03:17";
+  for (const d of dias) {
+    if (d.chave === hoje && !passou0317) continue;
+    d.registros.push(anotacaoDoDia(d.chave, p.prontuario));
+    d.registros.sort((a, b) => b.hora.localeCompare(a.hora));
+  }
   // Folhas arrancadas entre o primeiro e o segundo dia registrados.
   if (dias.length >= 3) dias.splice(dias.length - 1, 0, { chave: "rasgo", data: "FOLHAS AUSENTES", rasgado: true, registros: [] });
   // Um registro que ainda não deveria existir.
   dias.unshift({
     chave: "amanha",
     data: dataCurta(amanha),
-    registros: [{ hora: "03:17", tipo: "ac", codigo: "AC-██", texto: "Acesso à Ala ██ concedido. Transferência agendada.", futuro: true, nota: "esse dia ainda não aconteceu" }],
+    registros: [previsaoDeAmanha(diaBrasilia(amanha), p.prontuario)],
   });
 
   const missoes = Object.values(p.concluidas).reduce((s, n) => s + n, 0);
