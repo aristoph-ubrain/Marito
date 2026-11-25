@@ -1,24 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { ATRIBUTOS, siglaDe, type ChaveAtributo } from "@/lib/mock";
 import { dois } from "@/lib/regras";
+import { salvarOrdem } from "../actions";
 
 const ALAS = ["TÉRREO", "ALA A", "ALA B", "CONSULTÓRIOS", "ALA C", "CAPELA"];
 const DURACOES = ["00:10", "00:20", "00:30", "00:50", "01:00", "02:00", "05:00"];
 
+// O editor usa "mm:ss"; o banco guarda segundos.
+const paraSegundos = (mmss: string) => {
+  const [m, s] = mmss.split(":").map(Number);
+  return m * 60 + s;
+};
+
 export function EditorOrdem() {
-  const [titulo, setTitulo] = useState("Ronda na Capela");
-  const [ala, setAla] = useState("CAPELA");
-  const [descricao, setDescricao] = useState("Verificar se as velas estão apagadas. Não responder se alguém chamar pelo nome.");
-  const [reqs, setReqs] = useState<{ atributo: ChaveAtributo; minimo: number }[]>([
-    { atributo: "RIT", minimo: 3 },
-    { atributo: "AFI", minimo: 4 },
-  ]);
-  const [xp, setXp] = useState(200);
-  const [duracao, setDuracao] = useState("00:50");
+  const router = useRouter();
+  const [titulo, setTitulo] = useState("");
+  const [ala, setAla] = useState(ALAS[0]);
+  const [descricao, setDescricao] = useState("");
+  const [reqs, setReqs] = useState<{ atributo: ChaveAtributo; minimo: number }[]>([{ atributo: "FOR", minimo: 1 }]);
+  const [xp, setXp] = useState(50);
+  const [duracao, setDuracao] = useState("00:20");
   const [publicada, setPublicada] = useState(false);
+  const [codigo, setCodigo] = useState<string | null>(null);
+  const [salvando, iniciar] = useTransition();
   const [msg, setMsg] = useState<{ texto: string; ok: boolean } | null>(null);
 
   const mudarReq = (i: number, o: Partial<{ atributo: ChaveAtributo; minimo: number }>) => {
@@ -26,13 +34,19 @@ export function EditorOrdem() {
     setMsg(null);
   };
 
-  // Etapa 4: virará server action que grava a ordem.
   const salvar = (publicar: boolean) => {
-    if (!titulo.trim()) return setMsg({ texto: "Informe o título da ordem.", ok: false });
-    if (!reqs.length) return setMsg({ texto: "Inclua ao menos um requisito.", ok: false });
-    if (new Set(reqs.map((r) => r.atributo)).size !== reqs.length) return setMsg({ texto: "Há atributos repetidos nos requisitos.", ok: false });
-    setPublicada(publicar);
-    setMsg({ texto: publicar ? "Ordem OS-031 publicada. Já visível para os pacientes elegíveis." : "Rascunho salvo.", ok: true });
+    setMsg(null);
+    iniciar(async () => {
+      const r = await salvarOrdem(
+        { titulo, ala, descricao, requisitos: reqs, xp, duracao: paraSegundos(duracao) },
+        publicar,
+      );
+      if (!r.ok) return setMsg({ texto: r.erro, ok: false });
+      setCodigo(r.codigo);
+      setPublicada(publicar);
+      setMsg({ texto: publicar ? `Ordem ${r.codigo} publicada.` : `Rascunho ${r.codigo} salvo.`, ok: true });
+      router.push("/coordenacao/missoes");
+    });
   };
 
   const corSit = publicada ? "var(--color-verde)" : "var(--color-ocre)";
@@ -43,7 +57,7 @@ export function EditorOrdem() {
       <div className="flex items-end justify-between border-b border-tinta pb-2">
         <div className="flex flex-col gap-0.5">
           <span className="rotulo">EDIÇÃO DE ORDEM</span>
-          <span className="font-maquina text-2xl leading-none">OS-031</span>
+          <span className="font-maquina text-2xl leading-none">{codigo ?? "NOVA"}</span>
         </div>
         <span className="border-2 px-1.5 py-0.5 text-[11px] tracking-[1px]" style={{ borderColor: corSit, color: corSit }}>
           {publicada ? "PUBLICADA" : "RASCUNHO"}
@@ -110,7 +124,7 @@ export function EditorOrdem() {
       <div className="flex flex-col gap-1.5">
         <span className="rotulo">PRÉ-VISUALIZAÇÃO · COMO O PACIENTE VÊ</span>
         <div className="flex flex-col gap-1.5 border-[1.5px] border-tinta bg-papel-claro p-3 shadow-[3px_3px_0_rgba(43,38,32,.25)]">
-          <div className="flex justify-between border-b border-dashed border-tinta pb-1 text-[11px]"><span>OS-031</span><span>{ala}</span></div>
+          <div className="flex justify-between border-b border-dashed border-tinta pb-1 text-[11px]"><span>{codigo ?? "NOVA"}</span><span>{ala}</span></div>
           <b className="font-maquina text-base font-normal">{titulo || "(sem título)"}</b>
           <p className="m-0 text-xs leading-snug opacity-90">{descricao}</p>
           <div className="flex flex-wrap gap-1.5">
@@ -127,9 +141,9 @@ export function EditorOrdem() {
       )}
 
       <div className="flex flex-col gap-2">
-        <button type="button" className="btn btn-pri min-h-12 text-sm tracking-[1px]" onClick={() => salvar(true)}>PUBLICAR ORDEM</button>
+        <button type="button" className="btn btn-pri min-h-12 text-sm tracking-[1px]" disabled={salvando} onClick={() => salvar(true)}>PUBLICAR ORDEM</button>
         <div className="flex gap-2">
-          <button type="button" className="btn min-h-12 flex-1" onClick={() => salvar(false)}>SALVAR RASCUNHO</button>
+          <button type="button" className="btn min-h-12 flex-1" disabled={salvando} onClick={() => salvar(false)}>SALVAR RASCUNHO</button>
           <Link href="/coordenacao/missoes" className="btn min-h-12 flex-1">CANCELAR</Link>
         </div>
       </div>

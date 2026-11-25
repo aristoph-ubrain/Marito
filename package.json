@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:testar": "node --env-file=.env.local scripts/testar-banco.mjs"
+    "db:testar": "node --env-file=.env.local scripts/testar-banco.mjs",
+    "db:semear": "node --env-file=.env.local scripts/semear-ordens.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
