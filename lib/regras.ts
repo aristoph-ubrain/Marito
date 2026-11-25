@@ -41,6 +41,16 @@ export function diaBrasilia(data: Date): string {
   }).format(data);
 }
 
+/** "25/11" no horário de Brasília. */
+export function dataCurta(data: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: FUSO_HORARIO, day: "2-digit", month: "2-digit" }).format(data);
+}
+
+/** "03:17" no horário de Brasília. */
+export function horaBrasilia(data: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: FUSO_HORARIO, hour: "2-digit", minute: "2-digit", hour12: false }).format(data);
+}
+
 /** Uma missão em andamento termina quando passa a duração, mesmo com o jogo fechado. */
 export function missaoConcluida(inicio: Date, duracaoSegundos: number, agora: Date): boolean {
   return agora.getTime() - inicio.getTime() >= duracaoSegundos * 1000;

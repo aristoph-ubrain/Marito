@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Anotacao, Carimbo } from "@/components/ui";
+import { IDADE_MAX, IDADE_MIN, LIMITE_NOME, LIMITE_PROFISSAO, LIMITE_RELATO, mascaraAltura, NACIONALIDADES, validarIdentificacao, validarRelato } from "@/lib/cadastro";
+import { cadastrarPaciente } from "../actions";
 
 const ETAPAS = ["IDENTIFICAÇÃO", "RELATO", "ACESSO"];
 const vazio = { nome: "", idade: "", sexo: "", altura: "", nacionalidade: "", profissao: "", relato: "", senha: "", senha2: "", termo: false };
@@ -22,21 +24,31 @@ export function FormCadastro() {
   const [d, setD] = useState<Dados>(vazio);
   const [erro, setErro] = useState("");
   const [prontuario, setProntuario] = useState("");
+  const [quarto, setQuarto] = useState("");
+  const [enviando, iniciar] = useTransition();
 
   const campo = (k: keyof Dados) => ({
     id: k,
     value: d[k] as string,
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      setD((x) => ({ ...x, [k]: e.target.value }));
+      let v = e.target.value;
+      if (k === "idade") v = v.replace(/\D/g, "").slice(0, 2);
+      if (k === "altura") v = mascaraAltura(v);
+      if (k === "nome") v = v.slice(0, LIMITE_NOME);
+      if (k === "profissao") v = v.slice(0, LIMITE_PROFISSAO);
+      setD((x) => ({ ...x, [k]: v }));
       setErro("");
     },
   });
 
   const validar = () => {
     if (etapa === 1) {
-      if (!d.nome.trim()) return "Informe o nome do paciente.";
-      if (!/^\d{1,3}$/.test(d.idade.trim())) return "Informe a idade em números.";
-      if (!d.sexo) return "Selecione o sexo.";
+      const r = validarIdentificacao(d);
+      if (typeof r === "string") return r;
+    }
+    if (etapa === 2) {
+      const r = validarRelato(d.relato);
+      if (r) return r;
     }
     if (etapa === 3) {
       if (d.senha.length < 6) return "A senha precisa de ao menos 6 caracteres.";
@@ -46,16 +58,17 @@ export function FormCadastro() {
     return "";
   };
 
-  // Etapa 3 do código: virará server action que cria o paciente e gera o prontuário no banco.
   const avancar = () => {
     const e = validar();
     if (e) return setErro(e);
     if (etapa < 3) return setEtapa(etapa + 1);
-    let n: string;
-    do n = String(120 + Math.floor(Math.random() * 880)).padStart(4, "0");
-    while (n === "0112");
-    setProntuario(n);
-    setEtapa(4);
+    iniciar(async () => {
+      const r = await cadastrarPaciente(d);
+      if (!r.ok) return setErro(r.erro);
+      setProntuario(r.prontuario);
+      setQuarto(r.quarto);
+      setEtapa(4);
+    });
   };
 
   if (etapa === 4) {
@@ -66,10 +79,11 @@ export function FormCadastro() {
           <span className="text-xs">Seu prontuário</span>
           <span className="font-maquina text-[40px] leading-none">Nº {prontuario}</span>
         </div>
-        <p className="m-0 text-sm leading-normal"><b>Paciente:</b> {d.nome}<br /><b>Leito:</b> Ala A · Quarto {prontuario.slice(1)}</p>
+        <p className="m-0 text-sm leading-normal"><b>Paciente:</b> {d.nome}<br /><b>Leito:</b> Ala A · Quarto {quarto}</p>
         <Carimbo>CLASSE: ANÔMALO</Carimbo>
         <p className="m-0 text-xs opacity-85">Guarde este número. Ele será pedido em todo acesso ao sistema.</p>
         <Link href="/login" className="btn btn-pri min-h-[50px] text-[15px] tracking-[1.5px]">ACESSAR SISTEMA →</Link>
+        <Link href="/memorial" className="btn min-h-11 text-xs tracking-[1px]">LER O MEMORIAL DA INSTITUIÇÃO</Link>
       </div>
     );
   }
@@ -93,18 +107,23 @@ export function FormCadastro() {
       {etapa === 1 && (
         <div className="flex flex-col gap-3">
           <h1 className="m-0 font-maquina text-lg font-normal">I. IDENTIFICAÇÃO</h1>
-          <Campo id="nome" rotulo="NOME DO PACIENTE"><input className="campo" {...campo("nome")} /></Campo>
+          <Campo id="nome" rotulo={`NOME DO PACIENTE · ${d.nome.length}/${LIMITE_NOME}`}><input className="campo" maxLength={LIMITE_NOME} autoComplete="off" {...campo("nome")} /></Campo>
           <div className="grid grid-cols-2 gap-2.5">
-            <Campo id="idade" rotulo="IDADE"><input className="campo" inputMode="numeric" {...campo("idade")} /></Campo>
+            <Campo id="idade" rotulo={`IDADE (${IDADE_MIN}–${IDADE_MAX})`}><input className="campo" inputMode="numeric" maxLength={2} placeholder="32" {...campo("idade")} /></Campo>
             <Campo id="sexo" rotulo="SEXO">
               <select className="campo" {...campo("sexo")}>
                 <option value="">—</option><option value="M">M</option><option value="F">F</option><option value="O">Outro</option>
               </select>
             </Campo>
-            <Campo id="altura" rotulo="ALTURA (m)"><input className="campo" inputMode="decimal" placeholder="1,76" {...campo("altura")} /></Campo>
-            <Campo id="nacionalidade" rotulo="NACIONALIDADE"><input className="campo" {...campo("nacionalidade")} /></Campo>
+            <Campo id="altura" rotulo="ALTURA (m)"><input className="campo" inputMode="numeric" maxLength={4} placeholder="1,76" {...campo("altura")} /></Campo>
+            <Campo id="nacionalidade" rotulo="NACIONALIDADE">
+              <select className="campo" {...campo("nacionalidade")}>
+                <option value="">—</option>
+                {NACIONALIDADES.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </Campo>
           </div>
-          <Campo id="profissao" rotulo="PROFISSÃO"><input className="campo" {...campo("profissao")} /></Campo>
+          <Campo id="profissao" rotulo={`PROFISSÃO · ${d.profissao.length}/${LIMITE_PROFISSAO}`}><input className="campo" maxLength={LIMITE_PROFISSAO} autoComplete="off" {...campo("profissao")} /></Campo>
         </div>
       )}
 
@@ -114,7 +133,7 @@ export function FormCadastro() {
           <p className="m-0 text-xs leading-snug opacity-85">
             Descreva com suas palavras o que motivou a internação. O diagnóstico será definido pela equipe.
           </p>
-          <Campo id="relato" rotulo="RELATO DO PACIENTE (opcional)"><textarea className="campo" rows={6} {...campo("relato")} /></Campo>
+          <Campo id="relato" rotulo={`RELATO DO PACIENTE · ${d.relato.length}/${LIMITE_RELATO}`}><textarea className="campo" rows={6} maxLength={LIMITE_RELATO} required {...campo("relato")} /></Campo>
           <Anotacao style={{ fontSize: 18 }}>todos escrevem a mesma coisa nessa parte</Anotacao>
         </div>
       )}
@@ -138,8 +157,8 @@ export function FormCadastro() {
       {erro && <p role="alert" className="m-0 text-xs text-carimbo">{erro}</p>}
       <div className="flex gap-2">
         {etapa > 1 && <button type="button" className="btn min-h-12 flex-1" onClick={() => { setEtapa(etapa - 1); setErro(""); }}>VOLTAR</button>}
-        <button type="button" className="btn btn-pri min-h-12 flex-[2] tracking-[1px]" onClick={avancar}>
-          {etapa === 3 ? "REGISTRAR INTERNAÇÃO" : "CONTINUAR"}
+        <button type="button" className="btn btn-pri min-h-12 flex-[2] tracking-[1px]" disabled={enviando} onClick={avancar}>
+          {etapa === 3 ? (enviando ? "REGISTRANDO…" : "REGISTRAR INTERNAÇÃO") : "CONTINUAR"}
         </button>
       </div>
       <p className="m-0 text-[10px] leading-snug opacity-70">

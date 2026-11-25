@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Titulo } from "@/components/ui";
-import { siglaDe } from "@/lib/mock";
+import { siglaDe } from "@/lib/atributos";
 import type { Ordem, Situacao } from "@/lib/ordens";
 import { dois, mmss } from "@/lib/regras";
 import { alternarSituacao } from "./actions";
@@ -15,7 +15,7 @@ const ABAS: [Situacao, string][] = [["pub", "PUBLICADAS"], ["ras", "RASCUNHOS"],
 export function ListaOrdens({ ordens }: { ordens: Ordem[] }) {
   const [aba, setAba] = useState<Situacao>("pub");
   const [msg, setMsg] = useState("");
-  const [, iniciar] = useTransition();
+  const [ocupado, iniciar] = useTransition();
   const contar = (s: Situacao) => dois(ordens.filter((o) => o.situacao === s).length);
 
   const alternar = (o: Ordem) => {
@@ -69,8 +69,8 @@ export function ListaOrdens({ ordens }: { ordens: Ordem[] }) {
               </div>
               <div className="text-[11px] opacity-75">Criada por: {o.autor}</div>
               <div className="flex gap-2">
-                <Link href="/coordenacao/missoes/editor" className="btn flex-1 text-xs">EDITAR</Link>
-                <button type="button" className="btn flex-1 text-xs" onClick={() => alternar(o)}>{s === "pub" ? "ARQUIVAR" : "PUBLICAR"}</button>
+                <Link href={`/coordenacao/missoes/editor?codigo=${o.codigo}`} className="btn flex-1 text-xs">EDITAR</Link>
+                <button type="button" className="btn flex-1 text-xs" disabled={ocupado} onClick={() => alternar(o)}>{s === "pub" ? "ARQUIVAR" : "PUBLICAR"}</button>
               </div>
             </article>
           );

@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "db:testar": "node --env-file=.env.local scripts/testar-banco.mjs",
-    "db:semear": "node --env-file=.env.local scripts/semear-ordens.mjs"
+    "db:semear": "node --env-file=.env.local scripts/semear-ordens.mjs",
+    "db:equipe": "node --env-file=.env.local scripts/criar-equipe.mjs",
+    "db:resetar": "node --env-file=.env.local scripts/resetar-banco.mjs",
+    "db:equipe:remover": "node --env-file=.env.local scripts/remover-equipe.mjs",
+    "db:resetar:tudo": "node --env-file=.env.local scripts/resetar-banco.mjs --tudo"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

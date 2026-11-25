@@ -1,10 +1,21 @@
 import Link from "next/link";
-import { Anotacao, BarraXp, Carimbo, Censura, Foto3x4, GradeAtributos, Rodape, Titulo } from "@/components/ui";
-import { ATRIBUTOS, paciente as p } from "@/lib/mock";
-import { dois, milhar, xpParaProximoNivel } from "@/lib/regras";
+import { Suspense } from "react";
+import { Carregando } from "@/components/Carregando";
+import { Anotacao, BarraXp, Carimbo, Censura, GradeAtributos, Rodape, Titulo } from "@/components/ui";
+import { FotoFicha } from "./SeletorFoto";
+import { ATRIBUTOS } from "@/lib/atributos";
+import { pacienteAtual } from "@/lib/dal";
+import { dataCurta, dois, milhar, xpParaProximoNivel } from "@/lib/regras";
 
-export default function FichaPage() {
+const SEXO = { M: "M", F: "F", O: "Outro" } as const;
+
+async function Ficha() {
+  const p = await pacienteAtual();
   const total = xpParaProximoNivel(p.nivel);
+  const agora = new Date(); // a página já é dinâmica (lê a sessão)
+  const amanha = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
+  const anotacoes = [...p.anotacoes].sort((a, b) => new Date(a.em).getTime() - new Date(b.em).getTime());
+
   return (
     <>
       <div className="flex items-end justify-between border-b border-tinta pb-2">
@@ -15,43 +26,35 @@ export default function FichaPage() {
         <span className="text-right text-[11px] leading-tight">
           Leito: {p.ala} · Q. {p.quarto}
           <br />
-          Internação: ██/██/2026
+          Internação: {dataCurta(new Date(p.criadoEm))}
         </span>
       </div>
 
       <section className="flex flex-col gap-2.5">
         <Titulo>I. IDENTIFICAÇÃO</Titulo>
-        <div className="flex items-start gap-3.5">
-          <div className="flex flex-1 flex-col gap-1 text-sm leading-snug">
+        <FotoFicha atual={p.foto ?? null} prontuario={p.prontuario}>
+          <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm leading-snug">
             <div><b>Nome:</b> {p.nome}</div>
-            <div className="flex gap-3.5"><span><b>Idade:</b> {p.idade}</span><span><b>Sexo:</b> {p.sexo}</span></div>
-            <div><b>Altura:</b> {p.altura}</div>
-            <div><b>Nac.:</b> {p.nacionalidade}</div>
-            <div><b>Profissão:</b> {p.profissao}</div>
+            <div className="flex gap-3.5"><span><b>Idade:</b> {p.idade}</span><span><b>Sexo:</b> {SEXO[p.sexo] ?? p.sexo}</span></div>
+            <div><b>Altura:</b> {p.altura || "—"}</div>
+            <div><b>Nac.:</b> {p.nacionalidade || "—"}</div>
+            <div><b>Profissão:</b> {p.profissao || "—"}</div>
           </div>
-          <Foto3x4 />
-        </div>
+        </FotoFicha>
         <Carimbo>CLASSE: {p.classe}</Carimbo>
       </section>
 
       <section className="flex flex-col gap-2 text-sm leading-snug">
         <Titulo>II. HISTÓRICO CLÍNICO</Titulo>
         <div><b>Diagnóstico:</b> {p.diagnostico}</div>
-        <div><b>Medicação:</b> {p.medicacao}</div>
-        <div><b>Alergias:</b> {p.alergias}</div>
-        <div className="border-l-2 border-tinta pl-2.5 text-[13px]">
-          {p.relato} <Censura>paciente descreve a ala</Censura> com precisão.
+        <div className="min-w-0 border-l-2 border-tinta pl-2.5 text-[13px] whitespace-pre-line [overflow-wrap:anywhere]">
+          {p.relato ? <>“{p.relato}”</> : "Paciente não quis relatar o motivo da internação."}{" "}
+          <Censura>paciente descreve a ala</Censura>
         </div>
       </section>
 
-      <section className="flex flex-col gap-2 text-sm leading-snug">
-        <Titulo>III. AVALIAÇÃO PSICOLÓGICA</Titulo>
-        <div><b>Sintomas:</b> {p.sintomas}</div>
-        <div><b>Gatilhos:</b> {p.gatilhos}</div>
-      </section>
-
       <section className="flex flex-col gap-2.5">
-        <Titulo>IV. SITUAÇÃO NO SISTEMA</Titulo>
+        <Titulo>III. SITUAÇÃO NO SISTEMA</Titulo>
         <div className="flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
           <div className="flex justify-between text-[13px]">
             <span><b>Nível</b> {dois(p.nivel)} · Anômalo</span>
@@ -61,25 +64,40 @@ export default function FichaPage() {
           <GradeAtributos itens={ATRIBUTOS.map((a) => ({ sigla: a.sigla, valor: p.atributos[a.chave] }))} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Link href="/atributos" className="btn justify-between"><span>{p.pontos} pontos disponíveis</span><b>ATRIBUTOS →</b></Link>
-          <Link href="/missoes" className="btn justify-between"><span>Nenhuma atividade em curso</span><b>MISSÕES →</b></Link>
-          <Link href="/alas" className="btn justify-between"><span>Localização: {p.ala}</span><b>ALAS →</b></Link>
+          <Link href="/atributos" className="btn w-full justify-between gap-3 py-2 text-left"><span className="min-w-0 flex-1 leading-snug [overflow-wrap:normal]">{p.pontos} pontos disponíveis</span><b className="shrink-0 whitespace-nowrap">ATRIBUTOS →</b></Link>
+          <Link href="/missoes" className="btn w-full justify-between gap-3 py-2 text-left">
+            <span className="min-w-0 flex-1 leading-snug [overflow-wrap:normal]">{p.emCurso ? `Em atividade: ${p.emCurso.codigo}` : "Nenhuma atividade em curso"}</span><b className="shrink-0 whitespace-nowrap">MISSÕES →</b>
+          </Link>
+          <Link href="/alas" className="btn w-full justify-between gap-3 py-2 text-left"><span className="min-w-0 flex-1 leading-snug [overflow-wrap:normal]">Localização: {p.local}</span><b className="shrink-0 whitespace-nowrap">ALAS →</b></Link>
         </div>
       </section>
 
       <section className="flex flex-col gap-2.5">
-        <Titulo>V. ANOTAÇÕES DA EQUIPE</Titulo>
-        {p.anotacoes.map((a) => (
-          <div key={a.data + a.autor} className={`border-t border-dashed border-tinta pt-2 text-[13px] leading-snug ${a.futuro ? "opacity-80" : ""}`}>
-            <b>{a.data} · {a.autor}</b>
+        <Titulo>IV. ANOTAÇÕES DA EQUIPE</Titulo>
+        {anotacoes.map((a, i) => (
+          <div key={i} className="border-t border-dashed border-tinta pt-2 text-[13px] leading-snug">
+            <b>{dataCurta(new Date(a.em))} · {a.autor}</b>
             <br />
             {a.texto}
           </div>
         ))}
-        <Anotacao>Hoje é dia 25. Quem escreveu a de amanhã?</Anotacao>
+        <div className="border-t border-dashed border-tinta pt-2 text-[13px] leading-snug opacity-70">
+          <b>{dataCurta(amanha)} · ██████</b>
+          <br />
+          Paciente transferido para Ala ██.
+        </div>
+        <Anotacao>Essa última anotação é de amanhã.</Anotacao>
       </section>
 
       <Rodape>Documento de uso interno. O paciente não deve ter acesso a este prontuário.</Rodape>
     </>
+  );
+}
+
+export default function FichaPage() {
+  return (
+    <Suspense fallback={<Carregando texto="Abrindo o prontuário…" />}>
+      <Ficha />
+    </Suspense>
   );
 }

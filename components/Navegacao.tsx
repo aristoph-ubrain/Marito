@@ -16,7 +16,7 @@ export function Navegacao({
   return (
     <nav
       aria-label={rotulo}
-      className={grade ? "grid grid-cols-3 gap-1.5 text-center text-xs" : "flex flex-wrap gap-1.5 text-xs"}
+      className={grade ? "grid grid-cols-4 gap-1.5 text-center text-xs" : "flex flex-wrap gap-1.5 text-xs"}
     >
       {links.map((l) => {
         const ativo = caminho === l.href || caminho.startsWith(l.href + "/");

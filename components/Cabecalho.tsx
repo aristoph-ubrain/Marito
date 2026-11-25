@@ -1,3 +1,4 @@
+import { sair } from "@/app/(acesso)/actions";
 import { Selo } from "./ui";
 import { Navegacao } from "./Navegacao";
 
@@ -7,6 +8,7 @@ const LINKS_PACIENTE = [
   { href: "/missoes", rotulo: "MISSÕES" },
   { href: "/alas", rotulo: "ALAS" },
   { href: "/convivio", rotulo: "CONVÍVIO" },
+  { href: "/chat", rotulo: "CHAT" },
   { href: "/historico", rotulo: "HISTÓRICO" },
 ];
 
@@ -20,11 +22,15 @@ export function CabecalhoPaciente() {
           <div className="text-[11px] tracking-[1px]">SISTEMA DE REGISTRO E AVALIAÇÃO DE PACIENTES</div>
         </div>
       </div>
-      <div className="flex justify-between text-[11px] tracking-[.5px]">
+      <div className="flex items-center justify-between text-[11px] tracking-[.5px]">
         <span>
           STATUS: <b className="text-verde">● EM FUNCIONAMENTO</b>
         </span>
-        <span>03:17</span>
+        <form action={sair}>
+          <button type="submit" className="min-h-8 cursor-pointer border-0 bg-transparent p-0 text-[11px] tracking-[.5px] text-tinta underline">
+            SAIR
+          </button>
+        </form>
       </div>
       <Navegacao links={LINKS_PACIENTE} />
     </header>

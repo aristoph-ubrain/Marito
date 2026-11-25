@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { Anotacao, BarraXp, GradeAtributos, Rodape, Titulo } from "@/components/ui";
-import { ATRIBUTOS, siglaDe, type ChaveAtributo, type Missao } from "@/lib/mock";
+import { ATRIBUTOS, siglaDe, type ChaveAtributo, type Missao } from "@/lib/atributos";
 import { atendeRequisitos, dois, LIMITE_MISSOES_DIA, milhar, mmss, xpParaProximoNivel } from "@/lib/regras";
+import { iniciarMissao, interromperMissao, sincronizar } from "../actions";
 
 type Filtro = "todas" | "liberadas" | "bloqueadas" | "andamento";
 const FILTROS: [Filtro, string][] = [
@@ -13,60 +15,100 @@ const FILTROS: [Filtro, string][] = [
   ["andamento", "EM ANDAMENTO"],
 ];
 
+type EmCurso = { codigo: string; inicio: number; duracao: number };
+
 export function QuadroMissoes({
+  prontuario,
+  agoraServidor,
   missoes,
   atributos,
   nivel,
-  xpInicial,
+  xp,
   feitasHoje,
+  concluidas,
+  alasFechadas,
+  emCurso,
 }: {
+  prontuario: string;
+  agoraServidor: number;
   missoes: Missao[];
   atributos: Record<ChaveAtributo, number>;
   nivel: number;
-  xpInicial: number;
+  xp: number;
   feitasHoje: number;
+  concluidas: Record<string, number>;
+  alasFechadas: string[];
+  emCurso: EmCurso | null;
 }) {
-  const [xp, setXp] = useState(xpInicial);
-  const [hoje, setHoje] = useState(feitasHoje);
+  const router = useRouter();
   const [filtro, setFiltro] = useState<Filtro>("todas");
-  const [emCurso, setEmCurso] = useState<{ codigo: string; progresso: number } | null>(null);
-  const [concluidas, setConcluidas] = useState<Record<string, number>>({});
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [prog, setProg] = useState({ codigo: "", p: 0 });
+  const [erro, setErro] = useState("");
+  const [ocupado, iniciar] = useTransition();
 
-  useEffect(() => () => { if (timer.current) clearInterval(timer.current); }, []);
+  // Diferença entre o relógio do aparelho e o do servidor (corrige celulares com hora errada).
+  const [desvio] = useState(() => agoraServidor - Date.now());
+  const codigoEmCurso = emCurso?.codigo;
+  const inicioEmCurso = emCurso?.inicio;
+  const duracaoEmCurso = emCurso?.duracao;
 
-  // Etapa 4: o início/fim passará a ser gravado no servidor (funciona com o jogo fechado).
-  const iniciar = (m: Missao) => {
-    if (timer.current) clearInterval(timer.current);
-    let t0: number | null = null;
-    setEmCurso({ codigo: m.codigo, progresso: 0 });
-    timer.current = setInterval(() => {
-      const agora = Date.now();
-      t0 ??= agora;
-      const p = Math.min(1, (agora - t0) / (m.duracao * 1000));
+  // Cronômetro só de exibição: quem decide se a missão terminou é o servidor (pelo horário de início).
+  useEffect(() => {
+    if (!codigoEmCurso || inicioEmCurso === undefined || duracaoEmCurso === undefined) return;
+    let ativo = true;
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    let tentativas = 0;
+    const conferir = () => {
+      sincronizar()
+        .then((r) => {
+          if (!ativo) return;
+          if (r.ok && "restanteMs" in r && r.restanteMs) {
+            espera = setTimeout(conferir, Math.max(500, r.restanteMs)); // o servidor diz que ainda falta
+          } else {
+            router.refresh();
+          }
+        })
+        .catch(() => {
+          if (!ativo) return;
+          tentativas += 1;
+          espera = setTimeout(conferir, Math.min(30000, 2000 * 2 ** tentativas)); // rede falhou: tenta de novo
+        });
+    };
+    const id = setInterval(() => {
+      const p = Math.min(1, (Date.now() + desvio - inicioEmCurso) / (duracaoEmCurso * 1000));
+      setProg({ codigo: `${codigoEmCurso}@${inicioEmCurso}`, p });
       if (p >= 1) {
-        if (timer.current) clearInterval(timer.current);
-        setEmCurso(null);
-        setXp((x) => x + (m.xp ?? 0));
-        setHoje((h) => h + 1);
-        setConcluidas((c) => ({ ...c, [m.codigo]: (c[m.codigo] ?? 0) + 1 }));
-      } else {
-        setEmCurso({ codigo: m.codigo, progresso: p });
+        clearInterval(id);
+        conferir();
       }
-    }, 200);
+    }, 250);
+    return () => {
+      ativo = false;
+      clearInterval(id);
+      if (espera) clearTimeout(espera);
+    };
+  }, [codigoEmCurso, inicioEmCurso, duracaoEmCurso, desvio, router]);
+
+  const executar = (acao: () => Promise<{ ok: boolean; erro?: string }>) => {
+    setErro("");
+    iniciar(async () => {
+      const r = await acao();
+      if (!r.ok) setErro(r.erro ?? "Falha na operação.");
+      router.refresh();
+    });
   };
 
-  const interromper = () => {
-    if (timer.current) clearInterval(timer.current);
-    setEmCurso(null);
-  };
-
-  const limite = hoje >= LIMITE_MISSOES_DIA;
-  const ocupado = emCurso !== null || limite;
+  const progresso = emCurso && prog.codigo === `${emCurso.codigo}@${emCurso.inicio}` ? prog.p : 0;
+  const limite = feitasHoje >= LIMITE_MISSOES_DIA;
+  const bloqueadoGeral = emCurso !== null || limite || ocupado;
   const total = xpParaProximoNivel(nivel);
 
   const lista = missoes
-    .map((m) => ({ m, ok: atendeRequisitos(atributos, m.requisitos), rodando: emCurso?.codigo === m.codigo }))
+    .map((m) => {
+      const alaFechada = alasFechadas.includes(m.local);
+      const ok = !alaFechada && atendeRequisitos(atributos, m.requisitos);
+      return { m, ok, alaFechada, rodando: emCurso?.codigo === m.codigo };
+    })
     .filter(({ ok, rodando }) =>
       filtro === "todas" || (filtro === "liberadas" && ok) || (filtro === "bloqueadas" && !ok) || (filtro === "andamento" && rodando),
     );
@@ -77,15 +119,16 @@ export function QuadroMissoes({
         <Titulo>IV. ORDENS DE ATIVIDADE</Titulo>
         <p className="m-0 text-xs leading-snug opacity-85">
           Atividades internas liberadas conforme a avaliação de atributos do paciente. Uma atividade por vez, até {LIMITE_MISSOES_DIA} por dia.
+          A atividade continua mesmo com o sistema fechado.
         </p>
         <div className="flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
           <div className="flex justify-between text-[13px]">
-            <span><b>Pront. 0108</b> · Nv. {dois(nivel)}</span>
+            <span><b>Pront. {prontuario}</b> · Nv. {dois(nivel)}</span>
             <span>{milhar(xp)} / {milhar(total)} XP</span>
           </div>
           <BarraXp atual={xp} total={total} />
           <div className="flex justify-between border-t border-dashed border-tinta pt-1.5 text-xs">
-            <span>MISSÕES HOJE: <b>{hoje} / {LIMITE_MISSOES_DIA}</b></span>
+            <span>MISSÕES HOJE: <b>{feitasHoje} / {LIMITE_MISSOES_DIA}</b></span>
             <span>Reinicia à meia-noite</span>
           </div>
           <GradeAtributos itens={ATRIBUTOS.map((a) => ({ sigla: a.sigla, valor: atributos[a.chave] }))} />
@@ -106,11 +149,13 @@ export function QuadroMissoes({
           Limite diário atingido ({LIMITE_MISSOES_DIA}/{LIMITE_MISSOES_DIA}). Novas ordens após a meia-noite, horário de Brasília.
         </p>
       )}
+      {erro && <p role="alert" className="m-0 border border-dashed border-carimbo p-2 text-xs text-carimbo">{erro}</p>}
 
       <Anotacao>Ninguém autorizou a OS-019. Ela continua aparecendo.</Anotacao>
 
       <div className="flex flex-col gap-3.5">
-        {lista.map(({ m, ok, rodando }) => {
+        {lista.length === 0 && <p className="m-0 text-xs opacity-70">Nenhuma ordem nesta situação.</p>}
+        {lista.map(({ m, ok, alaFechada, rodando }) => {
           const cor = ok ? "var(--color-verde)" : "var(--color-carimbo)";
           return (
             <article key={m.codigo} className={`flex flex-col gap-2 border-[1.5px] border-tinta p-3 ${ok ? "bg-papel-claro" : "bg-papel-escuro"}`}>
@@ -125,12 +170,12 @@ export function QuadroMissoes({
                   {ok ? "LIBERADA" : "ACESSO NEGADO"}
                 </span>
               </div>
-              <p className="m-0 text-xs leading-snug opacity-90">{m.descricao}</p>
+              {m.descricao && <p className="m-0 text-xs leading-snug opacity-90">{m.descricao}</p>}
               <div className="flex flex-col gap-1">
                 <span className="text-[11px] tracking-[.5px]">REQUISITOS</span>
                 <div className="flex flex-wrap gap-1.5">
                   {m.requisitos.map((r) => {
-                    const tem = atributos[r.atributo];
+                    const tem = atributos[r.atributo] ?? 0;
                     const atende = tem >= r.minimo;
                     return (
                       <span key={r.atributo}
@@ -149,11 +194,13 @@ export function QuadroMissoes({
               {rodando && emCurso && (
                 <div className="flex flex-col gap-1.5">
                   <div className="h-4 border-[1.5px] border-verde p-0.5">
-                    <div className="h-full bg-verde" style={{ width: `${Math.round(emCurso.progresso * 100)}%` }} />
+                    <div className="h-full bg-verde" style={{ width: `${Math.round(progresso * 100)}%` }} />
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span>EM ANDAMENTO · restam {mmss((1 - emCurso.progresso) * m.duracao)}</span>
-                    <button type="button" className="btn" onClick={interromper}>INTERROMPER</button>
+                    <span>{progresso >= 1 ? "CONCLUINDO…" : `EM ANDAMENTO · restam ${mmss((1 - progresso) * emCurso.duracao)}`}</span>
+                    <button type="button" className="btn" disabled={ocupado || progresso >= 1} onClick={() => executar(interromperMissao)}>
+                      INTERROMPER
+                    </button>
                   </div>
                 </div>
               )}
@@ -162,12 +209,17 @@ export function QuadroMissoes({
                   <span className="text-[11px] opacity-75">
                     {concluidas[m.codigo] ? `Concluída ${concluidas[m.codigo]}×` : "Nunca realizada"}
                   </span>
-                  <button type="button" className="btn btn-pri px-4 text-sm tracking-[1px]" disabled={ocupado} onClick={() => iniciar(m)}>
+                  <button type="button" className="btn btn-pri px-4 text-sm tracking-[1px]" disabled={bloqueadoGeral}
+                    onClick={() => executar(() => iniciarMissao(m.codigo))}>
                     INICIAR
                   </button>
                 </div>
               )}
-              {!ok && <p className="m-0 text-xs text-carimbo">Avaliação insuficiente. Distribua pontos em ATRIBUTOS.</p>}
+              {!ok && (
+                <p className="m-0 text-xs text-carimbo">
+                  {alaFechada ? `Acesso à ${m.local} ainda não autorizado.` : "Avaliação insuficiente. Distribua pontos em ATRIBUTOS."}
+                </p>
+              )}
             </article>
           );
         })}

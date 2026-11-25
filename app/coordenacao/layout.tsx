@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { sair } from "@/app/(acesso)/actions";
 import { Navegacao } from "@/components/Navegacao";
 import { Papel, Selo } from "@/components/ui";
 
@@ -6,6 +6,7 @@ const LINKS = [
   { href: "/coordenacao/missoes", rotulo: "MISSÕES" },
   { href: "/coordenacao/pacientes", rotulo: "PACIENTES" },
   { href: "/coordenacao/alas", rotulo: "ALAS" },
+  { href: "/coordenacao/chat", rotulo: "CHAT" },
 ];
 
 export default function LayoutCoordenacao({ children }: { children: React.ReactNode }) {
@@ -27,8 +28,10 @@ export default function LayoutCoordenacao({ children }: { children: React.ReactN
           </div>
         </div>
         <div className="flex items-center justify-between text-xs">
-          <span>Dr. ██████ · Coordenador</span>
-          <Link href="/login">SAIR</Link>
+          <span>Equipe autorizada</span>
+          <form action={sair}>
+            <button type="submit" className="min-h-8 cursor-pointer border-0 bg-transparent p-0 text-xs text-tinta underline">SAIR</button>
+          </form>
         </div>
         <Navegacao links={LINKS} grade rotulo="Navegação da coordenação" />
       </header>

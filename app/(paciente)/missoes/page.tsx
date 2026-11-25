@@ -1,26 +1,37 @@
 import { Suspense } from "react";
-import { connection } from "next/server";
-import { paciente as p } from "@/lib/mock";
+import { Carregando } from "@/components/Carregando";
+import { alaAcessivel, listarAlas } from "@/lib/alas";
+import { pacienteAtual } from "@/lib/dal";
 import { listarMissoesPublicadas } from "@/lib/ordens";
+import { diaBrasilia } from "@/lib/regras";
 import { QuadroMissoes } from "./QuadroMissoes";
 
 async function Quadro() {
-  await connection();
-  const missoes = await listarMissoesPublicadas();
+  const p = await pacienteAtual();
+  const [missoes, alas] = await Promise.all([listarMissoesPublicadas(), listarAlas()]);
+  const alasFechadas = alas.filter((a) => !a.secreta && !alaAcessivel(a, p.nivel)).map((a) => a.nome);
+  const agora = new Date();
+  const hoje = diaBrasilia(agora);
+
   return (
     <QuadroMissoes
+      prontuario={p.prontuario}
+      agoraServidor={agora.getTime()}
       missoes={missoes}
       atributos={p.atributos}
       nivel={p.nivel}
-      xpInicial={p.xp}
-      feitasHoje={p.missoesHoje}
+      xp={p.xp}
+      feitasHoje={p.missoesHoje.dia === hoje ? p.missoesHoje.n : 0}
+      concluidas={p.concluidas}
+      alasFechadas={alasFechadas}
+      emCurso={p.emCurso ? { codigo: p.emCurso.codigo, inicio: new Date(p.emCurso.inicio).getTime(), duracao: p.emCurso.duracao } : null}
     />
   );
 }
 
 export default function MissoesPage() {
   return (
-    <Suspense fallback={<p className="text-xs">Consultando o quadro…</p>}>
+    <Suspense fallback={<Carregando texto="Consultando o quadro…" />}>
       <Quadro />
     </Suspense>
   );

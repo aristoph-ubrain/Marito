@@ -1,42 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { Figurinha } from "@/components/Figurinha";
 import { Anotacao, Carimbo, Censura, Foto3x4, GradeAtributos, Rodape, Titulo } from "@/components/ui";
-import { ATRIBUTOS, type Colega } from "@/lib/mock";
-
-const MEU_PRONTUARIO = "0108";
+import { ATRIBUTOS } from "@/lib/atributos";
+import type { Colega, Pedido } from "@/lib/convivio";
+import { responderConvivio, solicitarConvivio } from "../actions";
 
 export function Convivio({
-  colegas,
-  amigosIniciais,
-  pedidosIniciais,
+  meuProntuario,
+  amigos,
+  recebidos,
+  enviados,
 }: {
-  colegas: Record<string, Colega>;
-  amigosIniciais: string[];
-  pedidosIniciais: string[];
+  meuProntuario: string;
+  amigos: Colega[];
+  recebidos: Pedido[];
+  enviados: string[];
 }) {
-  const [amigos, setAmigos] = useState(amigosIniciais);
-  const [pedidos, setPedidos] = useState(pedidosIniciais);
-  const [enviados, setEnviados] = useState<string[]>([]);
+  const router = useRouter();
   const [numero, setNumero] = useState("");
   const [msg, setMsg] = useState<{ texto: string; ok: boolean } | null>(null);
   const [aberto, setAberto] = useState<string | null>(null);
+  const [ocupado, iniciar] = useTransition();
 
-  // Etapa 4: virará server action (pedido e aceite direto entre pacientes).
   const solicitar = (e: React.FormEvent) => {
     e.preventDefault();
     const n = numero.trim();
     if (!/^\d{4}$/.test(n)) return setMsg({ texto: "Informe os 4 dígitos do prontuário.", ok: false });
-    if (n === MEU_PRONTUARIO) return setMsg({ texto: "Este é o seu prontuário.", ok: false });
-    if (amigos.includes(n)) return setMsg({ texto: "Paciente já está no convívio.", ok: false });
-    if (enviados.includes(n)) return setMsg({ texto: "Solicitação já enviada.", ok: false });
-    setEnviados((s) => [...s, n]);
-    setNumero("");
-    setMsg({ texto: "Solicitação enviada ao paciente.", ok: true });
+    iniciar(async () => {
+      const r = await solicitarConvivio(n);
+      setMsg(r.ok ? { texto: r.msg ?? "Solicitação enviada.", ok: true } : { texto: r.erro, ok: false });
+      if (r.ok) setNumero("");
+      router.refresh();
+    });
   };
 
-  if (aberto) {
-    const c = colegas[aberto];
+  const responder = (de: string, aceitar: boolean) =>
+    iniciar(async () => {
+      const r = await responderConvivio(de, aceitar);
+      if (!r.ok) setMsg({ texto: r.erro, ok: false });
+      router.refresh();
+    });
+
+  const c = aberto ? amigos.find((a) => a.prontuario === aberto) : undefined;
+  if (c) {
     return (
       <>
         <button type="button" className="btn self-start" onClick={() => setAberto(null)}>← VOLTAR AO CONVÍVIO</button>
@@ -48,17 +57,17 @@ export function Convivio({
           <span className="text-[11px]">{c.ala}</span>
         </div>
         <section className="flex items-start gap-3.5">
-          <div className="flex flex-1 flex-col gap-1 text-sm leading-snug">
+          <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm leading-snug">
             <div><b>Nome:</b> {c.nome}</div>
             <div><b>Classificação:</b> ANÔMALO</div>
             <div><b>Nível:</b> {c.nivel}</div>
             <div><b>Situação:</b> {c.situacao}</div>
           </div>
-          <Foto3x4 largura={90} giro={-2} />
+          {c.foto ? <Figurinha opcao={c.foto} prontuario={c.prontuario} largura={104} giro={-2} prefixo={`col${c.prontuario}`} /> : <Foto3x4 largura={90} giro={-2} />}
         </section>
         <section className="flex flex-col gap-2">
           <Titulo>ATRIBUTOS</Titulo>
-          <GradeAtributos itens={ATRIBUTOS.map((a, i) => ({ sigla: a.sigla, valor: c.atributos[i] }))} />
+          <GradeAtributos itens={ATRIBUTOS.map((a, i) => ({ sigla: a.sigla, valor: c.atributos[i] ?? 0 }))} />
         </section>
         <section className="flex flex-col gap-2 text-[13px] leading-snug">
           <Titulo>HISTÓRICO CLÍNICO</Titulo>
@@ -66,10 +75,7 @@ export function Convivio({
           <div><Censura>medicação e relatos do paciente</Censura> <Censura>restritos</Censura></div>
           <Carimbo giro={-3} tamanho={13}>SIGILO MÉDICO</Carimbo>
         </section>
-        <section className="flex flex-col gap-1.5 text-[13px] leading-snug">
-          <Titulo>OBSERVAÇÃO COMPARTILHADA</Titulo>
-          <div className="border-l-2 border-tinta pl-2.5">{c.observacao}</div>
-        </section>
+        {c.prontuario === "0112" && <Anotacao>O quarto 112 está vazio desde 1998.</Anotacao>}
       </>
     );
   }
@@ -87,31 +93,27 @@ export function Convivio({
             <input id="pront" inputMode="numeric" maxLength={4} placeholder="0000" value={numero}
               onChange={(e) => { setNumero(e.target.value.replace(/\D/g, "").slice(0, 4)); setMsg(null); }}
               className="campo min-w-0 flex-1 text-xl tracking-[4px]" />
-            <button type="submit" className="btn btn-pri">SOLICITAR</button>
+            <button type="submit" className="btn btn-pri" disabled={ocupado}>SOLICITAR</button>
           </div>
           {msg && <p role="status" className={`m-0 text-xs ${msg.ok ? "text-verde" : "text-carimbo"}`}>{msg.texto}</p>}
-          <span className="text-[11px] opacity-70">Seu prontuário: {MEU_PRONTUARIO}</span>
+          <span className="text-[11px] opacity-70">Seu prontuário: {meuProntuario}</span>
         </form>
       </section>
 
-      {pedidos.length > 0 && (
+      {recebidos.length > 0 && (
         <section className="flex flex-col gap-2">
-          <span className="text-xs tracking-[.5px]"><b>SOLICITAÇÕES RECEBIDAS</b> ({pedidos.length})</span>
-          {pedidos.map((id) => {
-            const c = colegas[id];
-            return (
-              <div key={id} className="flex flex-col gap-2 border-[1.5px] border-dashed border-tinta bg-papel-claro p-3">
-                <div className="flex justify-between text-[11px]"><span>PRONT. {id}</span><span>{c.ala}</span></div>
-                <span className="font-maquina text-[17px]">{c.nome}</span>
-                <span className="text-xs opacity-85">Solicitação recebida às 03:12. O remetente não tem internação registrada.</span>
-                <div className="flex gap-2">
-                  <button type="button" className="btn flex-1" onClick={() => setPedidos((p) => p.filter((x) => x !== id))}>RECUSAR</button>
-                  <button type="button" className="btn btn-pri flex-1"
-                    onClick={() => { setAmigos((a) => [...a, id]); setPedidos((p) => p.filter((x) => x !== id)); }}>ACEITAR</button>
-                </div>
+          <span className="text-xs tracking-[.5px]"><b>SOLICITAÇÕES RECEBIDAS</b> ({recebidos.length})</span>
+          {recebidos.map((r) => (
+            <div key={r.prontuario} className="flex flex-col gap-2 border-[1.5px] border-dashed border-tinta bg-papel-claro p-3">
+              <div className="text-[11px]">PRONT. {r.prontuario}</div>
+              <span className="font-maquina text-[17px]">{r.nome}</span>
+              {r.nota && <span className="text-xs opacity-85">{r.nota}</span>}
+              <div className="flex gap-2">
+                <button type="button" className="btn flex-1" disabled={ocupado} onClick={() => responder(r.prontuario, false)}>RECUSAR</button>
+                <button type="button" className="btn btn-pri flex-1" disabled={ocupado} onClick={() => responder(r.prontuario, true)}>ACEITAR</button>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </section>
       )}
 
@@ -128,23 +130,21 @@ export function Convivio({
 
       <section className="flex flex-col gap-2.5">
         <span className="text-xs tracking-[.5px]"><b>PACIENTES NO CONVÍVIO</b> ({amigos.length})</span>
-        {amigos.map((id) => {
-          const c = colegas[id];
-          return (
-            <div key={id} className="flex flex-col gap-2 border-[1.5px] border-tinta bg-papel-claro p-3">
-              <div className="flex justify-between border-b border-dashed border-tinta pb-1.5 text-[11px]"><span>PRONT. {id}</span><span>{c.ala}</span></div>
-              <div className="flex items-center gap-2.5">
-                <Foto3x4 largura={44} giro={0} />
-                <div className="flex flex-1 flex-col gap-0.5">
-                  <span className="font-maquina text-[17px]">{c.nome}</span>
-                  <span className="text-xs">ANÔMALO · Nv. {c.nivel}</span>
-                  <span className="text-xs" style={{ color: c.cor }}>● {c.situacao}</span>
-                </div>
+        {amigos.length === 0 && <p className="m-0 text-xs opacity-70">Nenhum vínculo registrado.</p>}
+        {amigos.map((a) => (
+          <div key={a.prontuario} className="flex flex-col gap-2 border-[1.5px] border-tinta bg-papel-claro p-3">
+            <div className="flex justify-between border-b border-dashed border-tinta pb-1.5 text-[11px]"><span>PRONT. {a.prontuario}</span><span>{a.ala}</span></div>
+            <div className="flex items-center gap-2.5">
+              {a.foto ? <Figurinha opcao={a.foto} largura={52} giro={0} carimbo={false} prefixo={`am${a.prontuario}`} /> : <Foto3x4 largura={44} giro={0} />}
+              <div className="flex flex-1 flex-col gap-0.5">
+                <span className="font-maquina text-[17px]">{a.nome}</span>
+                <span className="text-xs">ANÔMALO · Nv. {a.nivel}</span>
+                <span className="text-xs" style={{ color: a.cor }}>● {a.situacao}</span>
               </div>
-              <button type="button" className="btn self-end" onClick={() => setAberto(id)}>VER FICHA →</button>
             </div>
-          );
-        })}
+            <button type="button" className="btn self-end" onClick={() => setAberto(a.prontuario)}>VER FICHA →</button>
+          </div>
+        ))}
       </section>
 
       <Anotacao>O 0112 me adicionou de novo. Eu recusei ontem.</Anotacao>

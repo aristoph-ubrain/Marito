@@ -1,16 +1,17 @@
 import { Suspense } from "react";
-import { connection } from "next/server";
+import { Carregando } from "@/components/Carregando";
+import { coordenadorAtual } from "@/lib/dal";
 import { listarOrdens } from "@/lib/ordens";
 import { ListaOrdens } from "./ListaOrdens";
 
 async function Ordens() {
-  await connection(); // dados sempre frescos, lidos a cada acesso
+  await coordenadorAtual();
   return <ListaOrdens ordens={await listarOrdens()} />;
 }
 
 export default function CoordMissoesPage() {
   return (
-    <Suspense fallback={<p className="text-xs">Consultando o arquivo…</p>}>
+    <Suspense fallback={<Carregando />}>
       <Ordens />
     </Suspense>
   );

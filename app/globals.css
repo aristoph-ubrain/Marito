@@ -28,105 +28,118 @@ body {
   font-family: var(--font-mono);
 }
 
-/* Folha de papel com manchas discretas */
-.papel {
-  background-color: var(--color-papel);
-  background-image:
-    radial-gradient(circle at 86% 5%, rgb(140 105 60 / 0.16) 0 34px, transparent 36px),
-    radial-gradient(circle at 12% 62%, rgb(140 105 60 / 0.1) 0 60px, transparent 64px);
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
-}
+/*
+ * Componentes na camada "components": assim as classes utilitárias do Tailwind
+ * (bg-*, border-*, min-h-*, p-*…) conseguem sobrepor estes estilos base.
+ */
+@layer components {
+  /* Folha de papel com manchas discretas */
+  .papel {
+    /* Textos digitados pelo jogador (relato, nomes, anotações) quebram mesmo sem espaços. */
+    overflow-wrap: anywhere;
+    background-color: var(--color-papel);
+    background-image:
+      radial-gradient(circle at 86% 5%, rgb(140 105 60 / 0.16) 0 34px, transparent 36px),
+      radial-gradient(circle at 12% 62%, rgb(140 105 60 / 0.1) 0 60px, transparent 64px);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
+  }
 
-/* Censura (tarja preta) */
-.censura {
-  background: var(--color-tinta);
-  color: var(--color-tinta);
-  user-select: none;
-}
+  /* Censura (tarja preta) */
+  .censura {
+    background: var(--color-tinta);
+    color: var(--color-tinta);
+    user-select: none;
+  }
 
-/* Botões */
-.btn {
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1.5px solid var(--color-tinta);
-  background: transparent;
-  color: var(--color-tinta);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  text-decoration: none;
-}
-.btn-pri {
-  background: var(--color-verde);
-  border-color: var(--color-verde);
-  color: #f4efe2;
-}
-.btn-escuro {
-  background: var(--color-tinta);
-  color: var(--color-papel);
-}
-.btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
+  /* Botões */
+  .btn {
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1.5px solid var(--color-tinta);
+    background: transparent;
+    color: var(--color-tinta);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-pri {
+    background: var(--color-verde);
+    border-color: var(--color-verde);
+    color: #f4efe2;
+  }
+  .btn-escuro {
+    background: var(--color-tinta);
+    color: var(--color-papel);
+  }
+  .btn-perigo {
+    background: var(--color-carimbo);
+    border-color: var(--color-carimbo);
+    color: #f4efe2;
+  }
+  .btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
 
-/* Campos de formulário */
-.campo {
-  width: 100%;
-  min-height: 46px;
-  box-sizing: border-box;
-  border: 1.5px solid var(--color-tinta);
-  background: var(--color-papel-campo);
-  padding: 0 10px;
-  font-family: var(--font-mono);
-  font-size: 16px;
-  color: var(--color-tinta);
-}
-textarea.campo {
-  padding: 10px;
-  line-height: 1.4;
-  resize: vertical;
-}
-.campo-erro {
-  border-color: var(--color-carimbo);
-}
-.rotulo {
-  font-size: 11px;
-  letter-spacing: 0.05em;
-}
+  /* Campos de formulário */
+  .campo {
+    width: 100%;
+    min-height: 46px;
+    box-sizing: border-box;
+    border: 1.5px solid var(--color-tinta);
+    background: var(--color-papel-campo);
+    padding: 0 10px;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--color-tinta);
+  }
+  textarea.campo {
+    padding: 10px;
+    line-height: 1.4;
+    resize: vertical;
+  }
+  .campo-erro {
+    border-color: var(--color-carimbo);
+  }
+  .rotulo {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
 
-/* Marcas de contagem (atributos sem teto) */
-.contagem {
-  position: relative;
-  display: flex;
-  gap: 4px;
-  height: 18px;
-  padding: 0 3px;
-}
-.contagem i {
-  width: 2px;
-  height: 18px;
-  background: var(--color-tinta);
-}
-.contagem i.novo {
-  width: 3px;
-  background: var(--color-verde-claro);
-}
-.contagem.cheio::after {
-  content: "";
-  position: absolute;
-  left: -1px;
-  right: -1px;
-  top: 8px;
-  height: 2px;
-  background: var(--color-tinta);
-  transform: rotate(-24deg);
-}
-.contagem.cheio-novo::after {
-  background: var(--color-verde-claro);
-  height: 3px;
+  /* Marcas de contagem (atributos sem teto) */
+  .contagem {
+    position: relative;
+    display: flex;
+    gap: 4px;
+    height: 18px;
+    padding: 0 3px;
+  }
+  .contagem i {
+    width: 2px;
+    height: 18px;
+    background: var(--color-tinta);
+  }
+  .contagem i.novo {
+    width: 3px;
+    background: var(--color-verde-claro);
+  }
+  .contagem.cheio::after {
+    content: "";
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    top: 8px;
+    height: 2px;
+    background: var(--color-tinta);
+    transform: rotate(-24deg);
+  }
+  .contagem.cheio-novo::after {
+    background: var(--color-verde-claro);
+    height: 3px;
+  }
 }

@@ -1,5 +1,5 @@
+import type { ChaveAtributo, Missao } from "./atributos";
 import { banco } from "./db";
-import type { ChaveAtributo, Missao } from "./mock";
 
 export type Situacao = "pub" | "ras" | "arq";
 
@@ -16,6 +16,7 @@ export type Ordem = {
   autor: string;
   protegida?: boolean;
   criadaEm: Date;
+  editadaEm?: Date;
 };
 
 async function colecao() {
@@ -26,6 +27,10 @@ async function colecao() {
 export async function listarOrdens(): Promise<Ordem[]> {
   const c = await colecao();
   return c.find({}, { projection: { _id: 0 } }).sort({ codigo: 1 }).toArray();
+}
+
+export async function buscarOrdem(codigo: string): Promise<Ordem | null> {
+  return (await colecao()).findOne({ codigo }, { projection: { _id: 0 } });
 }
 
 /** Só as publicadas, já no formato que o quadro do paciente usa. */
