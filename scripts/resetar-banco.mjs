@@ -15,7 +15,7 @@ if (tudo) apagar.push("ordens", "contadores", "equipe");
 
 const cliente = new MongoClient(process.env.MONGODB_URI);
 try {
-  const db = (await cliente.connect()).db("marito");
+  const db = (await cliente.connect()).db(process.env.MONGODB_DB || "marito");
   console.log("\nBanco: marito");
   for (const c of apagar) {
     const n = await db.collection(c).countDocuments();

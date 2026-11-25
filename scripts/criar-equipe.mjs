@@ -27,7 +27,7 @@ if (senha.length < 8 || senha.length > 72) {
 
 const cliente = new MongoClient(process.env.MONGODB_URI);
 try {
-  const col = (await cliente.connect()).db("marito").collection("equipe");
+  const col = (await cliente.connect()).db(process.env.MONGODB_DB || "marito").collection("equipe");
   await col.createIndex({ usuario: 1 }, { unique: true });
   const senhaHash = await bcrypt.hash(senha, 10);
   await col.updateOne(

@@ -11,7 +11,7 @@ if (!uri) {
 const cliente = new MongoClient(uri, { serverSelectionTimeoutMS: 10000 });
 try {
   await cliente.connect();
-  const db = cliente.db("marito");
+  const db = cliente.db(process.env.MONGODB_DB || "marito");
   await db.command({ ping: 1 });
   console.log("✔ Conectado ao MongoDB Atlas (banco: marito).\n");
   for (const c of ["pacientes", "ordens", "alas", "equipe", "historico", "convivio", "mensagens", "tentativas"]) {

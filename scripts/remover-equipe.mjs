@@ -8,7 +8,7 @@ import { MongoClient } from "mongodb";
 const cliente = new MongoClient(process.env.MONGODB_URI);
 const rl = createInterface({ input: stdin, output: stdout });
 try {
-  const col = (await cliente.connect()).db("marito").collection("equipe");
+  const col = (await cliente.connect()).db(process.env.MONGODB_DB || "marito").collection("equipe");
   const contas = await col.find({}, { projection: { _id: 0, usuario: 1, nome: 1 } }).sort({ usuario: 1 }).toArray();
   if (!contas.length) {
     console.log("Nenhuma conta da coordenação cadastrada.");

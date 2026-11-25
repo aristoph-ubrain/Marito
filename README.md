@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hospital Marito
 
-## Getting Started
+RPG idle de navegador (Next.js 16 + MongoDB Atlas). O jogador é um paciente; a coordenação (Mestre) cuida de missões, alas e avisos.
 
-First, run the development server:
+## Variáveis de ambiente
+
+| Variável | Obrigatória | Para que serve |
+| --- | --- | --- |
+| `MONGODB_URI` | Sim | Endereço do cluster no Atlas (sem nome de banco no fim). |
+| `SESSION_SECRET` | Sim | Assina as sessões. Mínimo 32 caracteres, aleatória. |
+| `MONGODB_DB` | Não | Nome do banco. Padrão `marito`. Use `marito_dev` no computador para não mexer nos dados do jogo publicado. |
+
+Gerar um segredo novo:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Rodar no computador
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run db:testar     # testa a conexão
+npm run db:semear     # missões de exemplo
+npm run db:equipe     # conta da coordenação
+npm run dev           # http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Os comandos `db:*` leem o `.env.local`. Para rodar um deles contra outro banco, troque `MONGODB_DB` no `.env.local`.
 
-## Learn More
+## Publicar na Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. **Atlas › Database & Network Access › IP Access List:** adicione `0.0.0.0/0` (a Vercel não tem IP fixo no plano gratuito). Use um usuário do banco com senha forte e permissão só de leitura e escrita.
+2. **Vercel › Add New › Project:** importe o repositório `aristoph-ubrain/Marito`. O framework (Next.js) é detectado sozinho; não mude os comandos de build.
+3. **Environment Variables:** `MONGODB_URI` e `SESSION_SECRET` (um segredo novo, diferente do local). `MONGODB_DB` só se quiser um banco diferente de `marito`.
+4. **Deploy.** Depois, em Settings › Functions › Function Region, escolha a região mais perto do cluster do Atlas (São Paulo = `gru1`, se o cluster estiver em `sa-east-1`).
+5. Prepare o banco de produção do seu computador, com o `.env.local` apontando para ele: `npm run db:semear` e `npm run db:equipe`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Cada `git push` na branch `main` publica de novo sozinho.

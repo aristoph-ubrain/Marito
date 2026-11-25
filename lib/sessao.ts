@@ -1,9 +1,13 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const segredo = process.env.SESSION_SECRET;
-if (!segredo || segredo.length < 32) throw new Error("SESSION_SECRET ausente ou curta (mínimo 32 caracteres) no .env.local");
-const chave = new TextEncoder().encode(segredo);
+/** Lida na hora do uso, para o build não exigir a variável. */
+function chave(): Uint8Array {
+  const segredo = process.env.SESSION_SECRET;
+  if (!segredo || segredo.length < 32)
+    throw new Error("SESSION_SECRET ausente ou curta (mínimo 32 caracteres): .env.local no seu computador, Environment Variables na Vercel");
+  return new TextEncoder().encode(segredo);
+}
 
 const COOKIE = "sessao";
 /** Só o número do prontuário, para preencher o login. Nunca guarda senha. */
@@ -25,7 +29,7 @@ export async function criarSessao(dados: Sessao) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(expira)
-    .sign(chave);
+    .sign(chave());
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -40,7 +44,7 @@ export async function lerSessao(): Promise<Sessao | null> {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, chave, { algorithms: ["HS256"] });
+    const { payload } = await jwtVerify(token, chave(), { algorithms: ["HS256"] });
     if (payload.perfil === "coordenacao" && typeof payload.usuario === "string") {
       return { perfil: "coordenacao", usuario: payload.usuario, nome: String(payload.nome ?? payload.usuario), emitidaEm: payload.iat ?? 0 };
     }

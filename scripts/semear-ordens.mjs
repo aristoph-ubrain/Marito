@@ -15,7 +15,7 @@ const ordens = [
 
 const cliente = new MongoClient(process.env.MONGODB_URI);
 try {
-  const db = (await cliente.connect()).db("marito");
+  const db = (await cliente.connect()).db(process.env.MONGODB_DB || "marito");
   const col = db.collection("ordens");
   await col.createIndex({ codigo: 1 }, { unique: true });
   for (const o of ordens) {
