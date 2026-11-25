@@ -12,7 +12,7 @@ import { buscarPaciente } from "@/lib/pacientes";
 import { registrar } from "@/lib/historico";
 import { colecaoPacientes } from "@/lib/pacientes";
 import { ehOpcaoFoto } from "@/components/Figurinha";
-import { atendeRequisitos, BONUS_PRIMEIRA_VISITA_ALA, diaBrasilia, LIMITE_MISSOES_DIA } from "@/lib/regras";
+import { atendeRequisitos, BONUS_PRIMEIRA_VISITA_ALA, diaBrasilia } from "@/lib/regras";
 
 export type Resposta = { ok: true; msg?: string } | { ok: false; erro: string };
 const SEM_SESSAO: Resposta = { ok: false, erro: "Sessão expirada. Entre novamente." };
@@ -75,8 +75,6 @@ export async function iniciarMissao(codigo: string): Promise<Resposta> {
     const atual = pend && !("erro" in pend) ? { ...p, ...pend.set } : p;
 
     if (atual.emCurso) return { erro: "Já existe uma atividade em andamento." };
-    if (atual.missoesHoje.dia === diaBrasilia(agora) && atual.missoesHoje.n >= LIMITE_MISSOES_DIA)
-      return { erro: `Limite diário atingido (${LIMITE_MISSOES_DIA}/${LIMITE_MISSOES_DIA}). Novas ordens após a meia-noite.` };
     if (!ala) return { erro: "Ala da ordem não encontrada. Procure a coordenação." };
     if (!alaAcessivel(ala, atual.nivel)) return { erro: `Acesso à ${ala.nome} não autorizado.` };
     if (!atendeRequisitos(atual.atributos, ordem.requisitos)) return { erro: "Avaliação insuficiente para esta ordem." };
@@ -145,7 +143,7 @@ async function visitar(prontuario: string, nomeAla: string): Promise<number> {
     return {
       set: { ...g.campos, local: nomeAla, alasVisitadas: [...p.alasVisitadas, nomeAla] },
       historico: [
-        { em: agora, tipo: "ac", codigo: "AC-V", texto: `Primeira entrada: ${nomeAla}.`, xp: BONUS_PRIMEIRA_VISITA_ALA },
+        { em: agora, tipo: "ac", codigo: "AC-V", texto: `Primeira entrada: ${nomeAla}.`, xp: BONUS_PRIMEIRA_VISITA_ALA, diaBrasilia },
         ...g.registros,
       ],
     };

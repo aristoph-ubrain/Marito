@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Anotacao, BarraXp, GradeAtributos, Rodape, Titulo } from "@/components/ui";
 import { ATRIBUTOS, siglaDe, type ChaveAtributo, type Missao } from "@/lib/atributos";
-import { atendeRequisitos, dois, LIMITE_MISSOES_DIA, milhar, mmss, xpParaProximoNivel } from "@/lib/regras";
+import { atendeRequisitos, dois, milhar, mmss, xpParaProximoNivel } from "@/lib/regras";
 import { iniciarMissao, interromperMissao, sincronizar } from "../actions";
 
 type Filtro = "todas" | "liberadas" | "bloqueadas" | "andamento";
@@ -99,8 +99,7 @@ export function QuadroMissoes({
   };
 
   const progresso = emCurso && prog.codigo === `${emCurso.codigo}@${emCurso.inicio}` ? prog.p : 0;
-  const limite = feitasHoje >= LIMITE_MISSOES_DIA;
-  const bloqueadoGeral = emCurso !== null || limite || ocupado;
+  const bloqueadoGeral = emCurso !== null || ocupado;
   const total = xpParaProximoNivel(nivel);
 
   const lista = missoes
@@ -118,7 +117,7 @@ export function QuadroMissoes({
       <section className="flex flex-col gap-2.5">
         <Titulo>IV. ORDENS DE ATIVIDADE</Titulo>
         <p className="m-0 text-xs leading-snug opacity-85">
-          Atividades internas liberadas conforme a avaliação de atributos do paciente. Uma atividade por vez, até {LIMITE_MISSOES_DIA} por dia.
+          Atividades internas liberadas conforme a avaliação de atributos do paciente. Uma atividade por vez, sem limite diário.
           A atividade continua mesmo com o sistema fechado.
         </p>
         <div className="flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
@@ -128,7 +127,7 @@ export function QuadroMissoes({
           </div>
           <BarraXp atual={xp} total={total} />
           <div className="flex justify-between border-t border-dashed border-tinta pt-1.5 text-xs">
-            <span>MISSÕES HOJE: <b>{feitasHoje} / {LIMITE_MISSOES_DIA}</b></span>
+            <span>MISSÕES HOJE: <b>{feitasHoje}</b></span>
             <span>Reinicia à meia-noite</span>
           </div>
           <GradeAtributos itens={ATRIBUTOS.map((a) => ({ sigla: a.sigla, valor: atributos[a.chave] }))} />
@@ -144,11 +143,6 @@ export function QuadroMissoes({
         ))}
       </div>
 
-      {limite && (
-        <p role="status" className="m-0 border border-dashed border-carimbo p-2 text-xs text-carimbo">
-          Limite diário atingido ({LIMITE_MISSOES_DIA}/{LIMITE_MISSOES_DIA}). Novas ordens após a meia-noite, horário de Brasília.
-        </p>
-      )}
       {erro && <p role="alert" className="m-0 border border-dashed border-carimbo p-2 text-xs text-carimbo">{erro}</p>}
 
       <Anotacao>Ninguém autorizou a OS-019. Ela continua aparecendo.</Anotacao>

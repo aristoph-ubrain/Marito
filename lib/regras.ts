@@ -4,7 +4,6 @@
  */
 
 export const PONTOS_POR_NIVEL = 3;
-export const LIMITE_MISSOES_DIA = 5;
 export const BONUS_ACESSO_DIARIO = 50;
 export const BONUS_PRIMEIRA_VISITA_ALA = 200;
 export const FUSO_HORARIO = "America/Sao_Paulo";
@@ -31,7 +30,7 @@ export function aplicarXp(estado: { nivel: number; xp: number; pontos: number },
   return { nivel, xp, pontos, niveisGanhos };
 }
 
-/** Data (AAAA-MM-DD) no horário de Brasília — chave do "dia" para limite e bônus. */
+/** Data (AAAA-MM-DD) no horário de Brasília — chave do "dia" para contagem e bônus. */
 export function diaBrasilia(data: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: FUSO_HORARIO,

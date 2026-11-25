@@ -67,7 +67,7 @@ export function ganharXp(
 
 /**
  * Pendências que dependem do tempo: missão que terminou (inclusive com o jogo fechado),
- * virada do dia (zera o limite de missões) e bônus de acesso diário.
+ * virada do dia (zera a contagem de missões) e bônus de acesso diário.
  */
 export function calcularPendencias(p: PacienteJogo, agora: Date): ResultadoMudanca {
   const hoje = diaBrasilia(agora);
@@ -83,7 +83,7 @@ export function calcularPendencias(p: PacienteJogo, agora: Date): ResultadoMudan
     const fim = new Date(new Date(p.emCurso.inicio).getTime() + p.emCurso.duracao * 1000);
     const g = ganharXp(estado, p.emCurso.xp, fim);
     estado = g.campos;
-    // Conta no limite do dia em que a missão terminou; se terminou ontem, não ocupa vaga de hoje.
+    // Conta no dia em que a missão terminou (só para exibição: não há limite diário).
     if (diaBrasilia(fim) === hoje) missoesHoje = { dia: hoje, n: missoesHoje.n + 1 };
     ordemConcluida = p.emCurso.codigo;
     historico.push(
