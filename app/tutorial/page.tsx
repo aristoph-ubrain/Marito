@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Anotacao, Censura, Papel, Selo } from "@/components/ui";
 import { ATRIBUTO_INICIAL, ATRIBUTOS } from "@/lib/atributos";
+import { BILHETES_POR_DIA, LIMITE_BILHETE } from "@/lib/bilhetes";
 import { BONUS_ACESSO_DIARIO, BONUS_PRIMEIRA_VISITA_ALA, milhar, PONTOS_POR_NIVEL, xpParaProximoNivel } from "@/lib/regras";
 
 export const metadata: Metadata = { title: "Como jogar — Manual do Interno" };
@@ -67,8 +68,8 @@ export default function TutorialPage() {
 
         <Passo n={3} titulo="ORDENS DE ATIVIDADE" onde="MISSÕES">
           <p className="m-0">
-            Cada ordem pede atributos mínimos e acesso à ala onde acontece. Inicie uma por vez e espere o tempo dela. Pode fechar o
-            sistema: ao voltar, a XP já estará no seu prontuário.
+            Cada ordem pede atributos mínimos e acesso à ala onde acontece. Inicie uma por vez e espere o tempo dela; não há limite
+            por dia. Pode fechar o sistema: ao voltar, a XP já estará no seu prontuário.
           </p>
           <p className="m-0">Ordens em vermelho estão bloqueadas: falta atributo ou a ala ainda não foi liberada.</p>
         </Passo>
@@ -107,17 +108,25 @@ export default function TutorialPage() {
           </p>
         </Passo>
 
-        <Passo n={7} titulo="CONVÍVIO E CHAT" onde="CONVÍVIO · CHAT">
+        <Passo n={7} titulo="CONVÍVIO, BILHETES E CHAT" onde="CONVÍVIO · CHAT">
           <p className="m-0">
             Adicione outros internos pelo nº do prontuário e veja a ficha deles quando aceitarem. No chat geral, todos os internos
             conversam. Mensagens somem em 24 horas.
+          </p>
+          <p className="m-0">
+            Em <b>Convívio › Bilhetes</b>, mande bilhetes privados para quem está no seu convívio: {BILHETES_POR_DIA} por dia, até{" "}
+            {LIMITE_BILHETE} caracteres. Chegam na hora, somem em 24 horas e podem ser rasgados. A equipe não lê.
           </p>
         </Passo>
 
         <Passo n={8} titulo="FICHA E HISTÓRICO" onde="FICHA · HISTÓRICO">
           <p className="m-0">
-            Na ficha ficam seus dados, o diagnóstico e as anotações da equipe. Toque na foto para trocá-la. O histórico registra tudo o
-            que acontece com você, dia a dia.
+            Na ficha ficam seus dados, o diagnóstico e as anotações da equipe. Toque na foto para escolher outra figurinha. O relato de
+            entrada pode ser reescrito em <b>EDITAR RELATO</b>; o diagnóstico só a equipe altera.
+          </p>
+          <p className="m-0">
+            O histórico registra tudo o que acontece com você, dia a dia, inclusive as anotações da equipe. Registros que você não
+            reconhece também devem ser relatados.
           </p>
         </Passo>
       </ol>
@@ -129,6 +138,7 @@ export default function TutorialPage() {
           <li>Distribua os pontos novos.</li>
           <li>Inicie uma ordem de atividade.</li>
           <li>Visite uma ala que ainda não conhece.</li>
+          <li>Leia e responda os bilhetes do seu convívio.</li>
           <li>Volte mais tarde para recolher a XP.</li>
         </ol>
       </section>
