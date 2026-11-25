@@ -6,9 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:testar": "node --env-file=.env.local scripts/testar-banco.mjs"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.18",
+    "mongodb": "^7.9.1",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0"

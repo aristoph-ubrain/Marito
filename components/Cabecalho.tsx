@@ -1,0 +1,32 @@
+import { Selo } from "./ui";
+import { Navegacao } from "./Navegacao";
+
+const LINKS_PACIENTE = [
+  { href: "/ficha", rotulo: "FICHA" },
+  { href: "/atributos", rotulo: "ATRIBUTOS" },
+  { href: "/missoes", rotulo: "MISSÕES" },
+  { href: "/alas", rotulo: "ALAS" },
+  { href: "/convivio", rotulo: "CONVÍVIO" },
+  { href: "/historico", rotulo: "HISTÓRICO" },
+];
+
+export function CabecalhoPaciente() {
+  return (
+    <header className="flex flex-col gap-2.5 border-b-2 border-tinta pb-3">
+      <div className="flex items-center gap-3">
+        <Selo />
+        <div className="flex flex-col gap-0.5">
+          <div className="font-maquina text-[17px] leading-tight tracking-[.5px]">HOSPITAL DE SAÚDE MENTAL MARITO</div>
+          <div className="text-[11px] tracking-[1px]">SISTEMA DE REGISTRO E AVALIAÇÃO DE PACIENTES</div>
+        </div>
+      </div>
+      <div className="flex justify-between text-[11px] tracking-[.5px]">
+        <span>
+          STATUS: <b className="text-verde">● EM FUNCIONAMENTO</b>
+        </span>
+        <span>03:17</span>
+      </div>
+      <Navegacao links={LINKS_PACIENTE} />
+    </header>
+  );
+}

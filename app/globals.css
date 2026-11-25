@@ -1,26 +1,132 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Hospital Marito — tokens visuais (prontuário datilografado) */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-madeira: #2a211a;
+  --color-papel: #efe6d0;
+  --color-papel-claro: #f7f1e1;
+  --color-papel-campo: #fbf7ec;
+  --color-papel-escuro: #e6dcc4;
+  --color-tinta: #2b2620;
+  --color-tinta-suave: #5e5344;
+  --color-verde: #2f5d46;
+  --color-verde-claro: #4f7a62;
+  --color-carimbo: #8a3b2e;
+  --color-caneta: #2c4a8a;
+  --color-ocre: #7a5a2a;
+  --color-clipe: #8b7a5e;
+
+  --font-maquina: var(--font-special-elite), "Courier New", monospace;
+  --font-mono: var(--font-courier-prime), "Courier New", monospace;
+  --font-mao: var(--font-caveat), cursive;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-madeira);
+  color: var(--color-tinta);
+  font-family: var(--font-mono);
+}
+
+/* Folha de papel com manchas discretas */
+.papel {
+  background-color: var(--color-papel);
+  background-image:
+    radial-gradient(circle at 86% 5%, rgb(140 105 60 / 0.16) 0 34px, transparent 36px),
+    radial-gradient(circle at 12% 62%, rgb(140 105 60 / 0.1) 0 60px, transparent 64px);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
+}
+
+/* Censura (tarja preta) */
+.censura {
+  background: var(--color-tinta);
+  color: var(--color-tinta);
+  user-select: none;
+}
+
+/* Botões */
+.btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-tinta);
+  background: transparent;
+  color: var(--color-tinta);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-pri {
+  background: var(--color-verde);
+  border-color: var(--color-verde);
+  color: #f4efe2;
+}
+.btn-escuro {
+  background: var(--color-tinta);
+  color: var(--color-papel);
+}
+.btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Campos de formulário */
+.campo {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-tinta);
+  background: var(--color-papel-campo);
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--color-tinta);
+}
+textarea.campo {
+  padding: 10px;
+  line-height: 1.4;
+  resize: vertical;
+}
+.campo-erro {
+  border-color: var(--color-carimbo);
+}
+.rotulo {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+/* Marcas de contagem (atributos sem teto) */
+.contagem {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  height: 18px;
+  padding: 0 3px;
+}
+.contagem i {
+  width: 2px;
+  height: 18px;
+  background: var(--color-tinta);
+}
+.contagem i.novo {
+  width: 3px;
+  background: var(--color-verde-claro);
+}
+.contagem.cheio::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: 8px;
+  height: 2px;
+  background: var(--color-tinta);
+  transform: rotate(-24deg);
+}
+.contagem.cheio-novo::after {
+  background: var(--color-verde-claro);
+  height: 3px;
 }
