@@ -83,7 +83,10 @@ export function FormCadastro() {
         <Carimbo>CLASSE: ANÔMALO</Carimbo>
         <p className="m-0 text-xs opacity-85">Guarde este número. Ele será pedido em todo acesso ao sistema.</p>
         <Link href="/login" className="btn btn-pri min-h-[50px] text-[15px] tracking-[1.5px]">ACESSAR SISTEMA →</Link>
-        <Link href="/memorial" className="btn min-h-11 text-xs tracking-[1px]">LER O MEMORIAL DA INSTITUIÇÃO</Link>
+        <div className="grid grid-cols-2 gap-2">
+          <Link href="/tutorial" className="btn min-h-11 px-2 text-center text-xs leading-tight tracking-[.5px]">COMO JOGAR</Link>
+          <Link href="/memorial" className="btn min-h-11 px-2 text-center text-xs leading-tight tracking-[.5px]">MEMORIAL</Link>
+        </div>
       </div>
     );
   }

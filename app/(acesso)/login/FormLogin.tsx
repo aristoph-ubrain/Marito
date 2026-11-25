@@ -118,8 +118,9 @@ export function FormLogin({ prontuarioSalvo }: { prontuarioSalvo?: string }) {
             : "Contas da coordenação são reemitidas pela diretoria."}
         </p>
       )}
-      <div className="border-t border-dashed border-tinta pt-2 text-center text-xs">
-        <Link href="/memorial">Sobre a instituição · Memorial do Sanatório Marito</Link>
+      <div className="grid grid-cols-2 gap-2 border-t border-dashed border-tinta pt-2.5">
+        <Link href="/tutorial" className="btn min-h-11 px-2 text-center text-xs leading-tight tracking-[.5px]">COMO JOGAR</Link>
+        <Link href="/memorial" className="btn min-h-11 px-2 text-center text-xs leading-tight tracking-[.5px]">MEMORIAL</Link>
       </div>
     </form>
   );
