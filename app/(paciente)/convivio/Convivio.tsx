@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Figurinha } from "@/components/Figurinha";
@@ -13,8 +14,10 @@ export function Convivio({
   amigos,
   recebidos,
   enviados,
+  bilhetesNaoLidos,
 }: {
   meuProntuario: string;
+  bilhetesNaoLidos: number;
   amigos: Colega[];
   recebidos: Pedido[];
   enviados: string[];
@@ -98,6 +101,17 @@ export function Convivio({
           {msg && <p role="status" className={`m-0 text-xs ${msg.ok ? "text-verde" : "text-carimbo"}`}>{msg.texto}</p>}
           <span className="text-[11px] opacity-70">Seu prontuário: {meuProntuario}</span>
         </form>
+        <Link href="/convivio/bilhetes" className="flex min-h-12 items-center justify-between gap-2.5 border-[1.5px] border-tinta bg-[#f8f2e2] px-3 text-[13px] text-tinta no-underline">
+          <span>
+            ✉ BILHETES
+            {bilhetesNaoLidos > 0 && (
+              <span className="ml-1.5 border-[1.5px] border-carimbo px-1.5 text-[10px] tracking-[1px] text-carimbo">
+                {bilhetesNaoLidos} NÃO LIDO{bilhetesNaoLidos > 1 ? "S" : ""}
+              </span>
+            )}
+          </span>
+          <b aria-hidden="true">→</b>
+        </Link>
       </section>
 
       {recebidos.length > 0 && (

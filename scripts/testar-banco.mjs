@@ -14,7 +14,7 @@ try {
   const db = cliente.db(process.env.MONGODB_DB || "marito");
   await db.command({ ping: 1 });
   console.log("✔ Conectado ao MongoDB Atlas (banco: marito).\n");
-  for (const c of ["pacientes", "ordens", "alas", "equipe", "historico", "convivio", "mensagens", "tentativas"]) {
+  for (const c of ["pacientes", "ordens", "alas", "equipe", "historico", "convivio", "mensagens", "bilhetes", "tentativas"]) {
     console.log(`  ${c.padEnd(11)} ${await db.collection(c).countDocuments()}`);
   }
   const equipe = await db.collection("equipe").find({}, { projection: { _id: 0, usuario: 1, nome: 1 } }).toArray();

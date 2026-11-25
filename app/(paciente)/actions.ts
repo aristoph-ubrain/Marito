@@ -13,6 +13,7 @@ import { registrar } from "@/lib/historico";
 import { colecaoPacientes } from "@/lib/pacientes";
 import { ehOpcaoFoto } from "@/components/Figurinha";
 import { LIMITE_RELATO, validarRelato } from "@/lib/cadastro";
+import { enviarBilhete, LIMITE_BILHETE, rasgarBilhete } from "@/lib/bilhetes";
 import { atendeRequisitos, BONUS_PRIMEIRA_VISITA_ALA, diaBrasilia } from "@/lib/regras";
 
 export type Resposta = { ok: true; msg?: string } | { ok: false; erro: string };
@@ -255,4 +256,30 @@ async function registrarConvivio(a: string, b: string) {
   const agora = new Date();
   await registrar(a, [{ em: agora, tipo: "cv", codigo: `CV-${b}`, texto: `Convívio aceito: Pront. ${b}${pb ? ` · ${pb.nome}` : ""}.` }]);
   await registrar(b, [{ em: agora, tipo: "cv", codigo: `CV-${a}`, texto: `Convívio aceito: Pront. ${a}${pa ? ` · ${pa.nome}` : ""}.` }]);
+}
+
+/* ---------- Bilhetes ---------- */
+
+export async function escreverBilhete(para: string, texto: string): Promise<Resposta> {
+  const eu = await prontuarioDaSessao();
+  if (!eu) return SEM_SESSAO;
+  const p = typeof para === "string" ? para.trim() : "";
+  if (!/^\d{4}$/.test(p) || p === eu) return { ok: false, erro: "Escolha um paciente do seu convívio." };
+  const t = typeof texto === "string" ? texto.replace(/\s+/g, " ").trim() : "";
+  if (!t) return { ok: false, erro: "Escreva o bilhete antes de enviar." };
+  if (t.length > LIMITE_BILHETE) return { ok: false, erro: `O bilhete pode ter no máximo ${LIMITE_BILHETE} caracteres.` };
+  const erro = await enviarBilhete(eu, p, t);
+  if (erro) return { ok: false, erro };
+  revalidatePath("/convivio", "layout");
+  return { ok: true, msg: "Bilhete dobrado e entregue." };
+}
+
+export async function rasgar(id: string): Promise<Resposta> {
+  const eu = await prontuarioDaSessao();
+  if (!eu) return SEM_SESSAO;
+  if (typeof id !== "string") return { ok: false, erro: "Bilhete não encontrado." };
+  const erro = await rasgarBilhete(eu, id);
+  if (erro) return { ok: false, erro };
+  revalidatePath("/convivio", "layout");
+  return { ok: true };
 }
