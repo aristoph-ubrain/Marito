@@ -16,6 +16,7 @@ export type PacienteResumo = {
   pontos: number;
   atributos: { sigla: string; nome: string; valor: number }[];
   diagnostico: string;
+  relato: string;
   notas: string[];
 };
 
@@ -91,6 +92,12 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
                     <GradeAtributos itens={p.atributos} />
                     <span className="text-[11px] opacity-75">{p.pontos > 0 ? `${p.pontos} ponto${p.pontos > 1 ? "s" : ""} ainda não distribuído${p.pontos > 1 ? "s" : ""}.` : "Todos os pontos distribuídos."}</span>
                   </div>
+                  <details className="border-[1.5px] border-tinta p-2.5">
+                    <summary className="rotulo cursor-pointer">RELATO DE ENTRADA</summary>
+                    <p className="m-0 mt-2 text-[13px] leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]">
+                      {p.relato.trim() || "Não consta relato na internação."}
+                    </p>
+                  </details>
                   <p className="m-0 text-[11px] leading-snug opacity-75">
                     XP e pontos vêm apenas das regras do jogo: missões, acesso diário e primeira visita a uma ala.
                   </p>
@@ -131,6 +138,10 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
                 <div className="mt-2.5 flex flex-col gap-1.5 text-tinta">
                   <span className="rotulo">ATRIBUTOS</span>
                   <GradeAtributos itens={ATRIBUTOS.map((a) => ({ sigla: a.sigla, valor: "??" }))} />
+                  <span className="rotulo mt-1">RELATO DE ENTRADA</span>
+                  <p className="m-0 text-[13px] leading-relaxed">
+                    Eu não pedi para entrar. <span className="censura">Já estava aqui</span> quando construíram a ala.
+                  </p>
                 </div>
               </div>
             )}

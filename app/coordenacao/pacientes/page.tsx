@@ -24,6 +24,7 @@ async function Lista() {
       pontos: p.pontos,
       atributos: ATRIBUTOS.map((a) => ({ sigla: a.sigla, nome: a.nome, valor: p.atributos[a.chave] })),
       diagnostico: p.diagnostico,
+      relato: p.relato ?? "",
       notas: [...p.anotacoes]
         .sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime())
         .map((a) => `${dataCurta(new Date(a.em))} · ${a.autor} · ${a.texto}`),
