@@ -3,7 +3,7 @@
  */
 import { ObjectId } from "mongodb";
 import { banco, umaVez } from "./db";
-import { FUSO_HORARIO, horaBrasilia } from "./regras";
+import { horaBrasilia } from "./regras";
 
 export const LIMITE_MENSAGEM = 200;
 export const INTERVALO_ENVIO_S = 3;
@@ -45,7 +45,7 @@ export async function publicar(m: Omit<Doc, "em" | "_id">) {
 
 /**
  * Mensagens das últimas 24 h, em ordem. Com `depois`, só as mais novas que esse instante.
- * Também dispara a mensagem diária do "████████" às 03:12 (narrativa).
+ * Também dispara a mensagem do "████████", uma a cada 2 horas (narrativa).
  */
 export async function listarMensagens(eu?: string, depois?: number): Promise<MensagemVista[]> {
   const col = await colecao();
@@ -66,23 +66,27 @@ const FALAS_FANTASMA = [
   "alguém deixou a luz da lavanderia acesa pra mim",
   "eu também fui internado no dia 25",
   "não precisa responder. eu sei onde vocês estão",
+  "o quarto 112 está mais frio hoje",
+  "a contagem vai dar um a mais de novo",
+  "quem apagou a luz do corredor?",
+  "conheço o número do seu prontuário",
+  "estou esperando no fim da escada",
 ];
+
+/** O "████████" fala uma vez a cada 2 horas: 01:12, 03:12, 05:12… (horário de Brasília). */
+const JANELA_MS = 2 * 60 * 60 * 1000;
+// 01:12 em Brasília = 04:12 UTC. O Brasil não tem horário de verão desde 2019, então o deslocamento é fixo.
+const INICIO_JANELA_MS = (4 * 60 + 12) * 60 * 1000;
 
 async function talvezFantasma(col: Awaited<ReturnType<typeof colecao>>) {
   const agora = new Date();
-  const partes = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", { timeZone: FUSO_HORARIO, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })
-      .formatToParts(agora)
-      .map((p) => [p.type, p.value]),
-  );
-  const dia = `${partes.year}-${partes.month}-${partes.day}`;
-  const minutos = Number(partes.hour) * 60 + Number(partes.minute);
-  if (minutos < 3 * 60 + 12) return; // só depois das 03:12 (Brasília)
-  // Uma vez por dia; o upsert garante que duas requisições juntas não dupliquem.
-  const fala = FALAS_FANTASMA[Number(partes.day) % FALAS_FANTASMA.length];
+  const janela = Math.floor((agora.getTime() - INICIO_JANELA_MS) / JANELA_MS);
+  const chave = `j${janela}`; // guardada no campo `dia` (já indexado)
+  const fala = FALAS_FANTASMA[janela % FALAS_FANTASMA.length];
+  // Uma por janela: a mensagem entra no primeiro acesso ao chat depois do horário.
   await col.updateOne(
-    { tipo: "fantasma", dia },
-    { $setOnInsert: { tipo: "fantasma", dia, autor: "████████", texto: fala, em: agora } },
+    { tipo: "fantasma", dia: chave },
+    { $setOnInsert: { tipo: "fantasma", dia: chave, autor: "████████", texto: fala, em: agora } },
     { upsert: true },
   );
 }
