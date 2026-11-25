@@ -17,7 +17,7 @@ export type Colega = {
   situacao: string;
   cor: string;
   atributos: (number | "?")[];
-  foto?: 1 | 2 | 3 | 4 | 5 | 6;
+  foto?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 };
 
 export async function colecaoConvivio() {

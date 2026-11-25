@@ -39,7 +39,7 @@ export type Paciente = {
   concluidas?: Record<string, number>;
   diagnostico?: string;
   anotacoes?: Anotacao[];
-  foto?: 1 | 2 | 3 | 4 | 5 | 6; // figurinha escolhida na ficha
+  foto?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10; // figurinha escolhida na ficha
   recusou0112?: string; // dia em que recusou o pedido do 0112
   aceitou0112?: boolean;
 };

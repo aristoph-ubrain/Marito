@@ -1,11 +1,14 @@
 import { RETRATOS } from "./retratos";
 
-export type OpcaoFoto = 1 | 2 | 3 | 4 | 5 | 6;
-export const OPCOES_FOTO: OpcaoFoto[] = [1, 2, 3, 4, 5, 6];
-export const ehOpcaoFoto = (v: unknown): v is OpcaoFoto => typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 6;
+export type OpcaoFoto = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+export const OPCOES_FOTO: OpcaoFoto[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+export const ehOpcaoFoto = (v: unknown): v is OpcaoFoto => typeof v === "number" && Number.isInteger(v) && v >= 1 && v <= 10;
 
-/** Tema de cada figurinha (4–6 pensadas para as classes futuras). */
-export const TEMA_FOTO: Record<OpcaoFoto, string | null> = { 1: null, 2: null, 3: null, 4: "Invocador", 5: "Ocultista", 6: "Possuído" };
+/** Tema de cada figurinha (4–6 pensadas para as classes futuras; 7–10, contos do sanatório). */
+export const TEMA_FOTO: Record<OpcaoFoto, string | null> = {
+  1: null, 2: null, 3: null, 4: "Invocador", 5: "Ocultista", 6: "Possuído",
+  7: "Sonâmbula", 8: "Menino", 9: "Vigia", 10: "Espelho",
+};
 
 const DESCRICAO: Record<OpcaoFoto, string> = {
   1: "homem de óculos e barba, olhar fixo",
@@ -14,6 +17,10 @@ const DESCRICAO: Record<OpcaoFoto, string> = {
   4: "homem idoso olhando para cima, com rostos de espíritos ao redor",
   5: "mulher de óculos redondos com símbolos na pele e um círculo de giz atrás",
   6: "pessoa de cabeça inclinada, olho leitoso e sorriso largo demais",
+  7: "mulher de olhos fechados e cabelo sobre o rosto, com a mão de alguém no ombro",
+  8: "menino de pijama iluminado por uma lanterna, com a sombra de um adulto na parede",
+  9: "vigia de bigode e boné, com uma porta entreaberta e um rosto no vão atrás dele",
+  10: "mulher de coque e gola de renda, com um segundo rosto virado para o lado",
 };
 
 /**

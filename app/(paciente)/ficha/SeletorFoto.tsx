@@ -56,7 +56,7 @@ export function FotoFicha({ atual, prontuario, children }: { atual: OpcaoFoto | 
                 key={n}
                 type="button"
                 aria-pressed={atual === n}
-                aria-label={`Usar a foto opção 0${n}${TEMA_FOTO[n] ? ` (${TEMA_FOTO[n]})` : ""}`}
+                aria-label={`Usar a foto opção ${String(n).padStart(2, "0")}${TEMA_FOTO[n] ? ` (${TEMA_FOTO[n]})` : ""}`}
                 disabled={salvando}
                 onClick={() => escolher(n)}
                 className={`flex min-w-0 cursor-pointer flex-col items-center gap-2 border-2 px-0.5 pt-2 pb-1.5 font-mono text-tinta ${
@@ -64,7 +64,7 @@ export function FotoFicha({ atual, prontuario, children }: { atual: OpcaoFoto | 
                 }`}
               >
                 <Figurinha opcao={n} largura={88} giro={0} carimbo={false} prefixo={`sel${n}`} />
-                <span className="text-center text-[11px] leading-tight tracking-[1px]">OPÇÃO 0{n}{TEMA_FOTO[n] && <><br /><span className="text-[9px] opacity-70">{TEMA_FOTO[n]!.toUpperCase()}</span></>}</span>
+                <span className="text-center text-[11px] leading-tight tracking-[1px]">OPÇÃO {String(n).padStart(2, "0")}{TEMA_FOTO[n] && <><br /><span className="text-[9px] opacity-70">{TEMA_FOTO[n]!.toUpperCase()}</span></>}</span>
               </button>
             ))}
           </div>
