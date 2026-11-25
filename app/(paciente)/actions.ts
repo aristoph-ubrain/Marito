@@ -12,6 +12,7 @@ import { buscarPaciente } from "@/lib/pacientes";
 import { registrar } from "@/lib/historico";
 import { colecaoPacientes } from "@/lib/pacientes";
 import { ehOpcaoFoto } from "@/components/Figurinha";
+import { LIMITE_RELATO, validarRelato } from "@/lib/cadastro";
 import { atendeRequisitos, BONUS_PRIMEIRA_VISITA_ALA, diaBrasilia } from "@/lib/regras";
 
 export type Resposta = { ok: true; msg?: string } | { ok: false; erro: string };
@@ -56,6 +57,22 @@ export async function escolherFoto(opcao: number): Promise<Resposta> {
   await (await colecaoPacientes()).updateOne({ prontuario }, { $set: { foto: opcao } });
   revalidatePath("/", "layout");
   return { ok: true };
+}
+
+/** O paciente reescreve o próprio relato de entrada (o diagnóstico continua com a coordenação). */
+export async function editarRelato(texto: string): Promise<Resposta> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return SEM_SESSAO;
+  const relato = typeof texto === "string" ? texto.replace(/\r\n/g, "\n").trim() : "";
+  const erro = validarRelato(relato);
+  if (erro) return { ok: false, erro };
+  const r = await (await colecaoPacientes()).updateOne({ prontuario }, { $set: { relato: relato.slice(0, LIMITE_RELATO) } });
+  if (!r.matchedCount) return SEM_SESSAO;
+  if (r.modifiedCount) await registrar(prontuario, [{ em: new Date(), tipo: "ev", codigo: "RL", texto: "Relato de entrada reescrito pelo paciente." }]);
+  revalidatePath("/ficha");
+  revalidatePath("/historico");
+  revalidatePath("/coordenacao/pacientes");
+  return { ok: true, msg: "Relato atualizado." };
 }
 
 /* ---------- Missões ---------- */

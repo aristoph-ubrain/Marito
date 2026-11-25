@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Carregando } from "@/components/Carregando";
-import { Anotacao, BarraXp, Carimbo, Censura, GradeAtributos, Rodape, Titulo } from "@/components/ui";
+import { Anotacao, BarraXp, Carimbo, GradeAtributos, Rodape, Titulo } from "@/components/ui";
 import { FotoFicha } from "./SeletorFoto";
+import { RelatoEditavel } from "./RelatoEditavel";
 import { ATRIBUTOS } from "@/lib/atributos";
 import { pacienteAtual } from "@/lib/dal";
 import { dataCurta, dois, milhar, xpParaProximoNivel } from "@/lib/regras";
@@ -47,10 +48,7 @@ async function Ficha() {
       <section className="flex flex-col gap-2 text-sm leading-snug">
         <Titulo>II. HISTÓRICO CLÍNICO</Titulo>
         <div><b>Diagnóstico:</b> {p.diagnostico}</div>
-        <div className="min-w-0 border-l-2 border-tinta pl-2.5 text-[13px] whitespace-pre-line [overflow-wrap:anywhere]">
-          {p.relato ? <>“{p.relato}”</> : "Paciente não quis relatar o motivo da internação."}{" "}
-          <Censura>paciente descreve a ala</Censura>
-        </div>
+        <RelatoEditavel relato={p.relato ?? ""} />
       </section>
 
       <section className="flex flex-col gap-2.5">
