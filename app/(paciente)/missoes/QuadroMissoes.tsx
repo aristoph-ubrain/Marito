@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Anotacao, BarraXp, GradeAtributos, Rodape, Titulo } from "@/components/ui";
 import { ATRIBUTOS, siglaDe, type ChaveAtributo, type Missao } from "@/lib/atributos";
-import { atendeRequisitos, dois, milhar, mmss, xpParaProximoNivel } from "@/lib/regras";
+import { atendeRequisitos, dois, duracaoTexto, milhar, mmss, xpParaProximoNivel } from "@/lib/regras";
 import { iniciarMissao, interromperMissao, sincronizar } from "../actions";
 
 type Filtro = "todas" | "liberadas" | "bloqueadas" | "andamento";
@@ -182,7 +182,7 @@ export function QuadroMissoes({
               </div>
               <div className="flex justify-between border-t border-dashed border-tinta pt-1.5 text-[13px]">
                 <span><b>Recompensa:</b> {m.xp == null ? "+??? XP" : `+${m.xp} XP`}</span>
-                <span>Duração {mmss(m.duracao)}</span>
+                <span>Duração {duracaoTexto(m.duracao)}</span>
               </div>
 
               {rodando && emCurso && (

@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { Titulo } from "@/components/ui";
 import { siglaDe } from "@/lib/atributos";
 import type { Ordem, Situacao } from "@/lib/ordens";
-import { dois, mmss } from "@/lib/regras";
+import { dois, duracaoTexto } from "@/lib/regras";
 import { alternarSituacao } from "./actions";
 
 const ROTULO: Record<Situacao, string> = { pub: "PUBLICADA", ras: "RASCUNHO", arq: "ARQUIVADA" };
@@ -64,7 +64,7 @@ export function ListaOrdens({ ordens }: { ordens: Ordem[] }) {
                 {o.requisitos.map((r) => <span key={r.atributo} className="border-[1.5px] border-tinta px-1.5 py-0.5 text-[11px]">{siglaDe(r.atributo)} {dois(r.minimo)}</span>)}
               </div>
               <div className="flex justify-between text-xs">
-                <span><b>+{o.xp} XP</b> · {mmss(o.duracao)}</span>
+                <span><b>+{o.xp} XP</b> · {duracaoTexto(o.duracao)}</span>
                 <span className="opacity-75">{o.vezes ? `Concluída ${o.vezes}×` : "Nunca realizada"}</span>
               </div>
               <div className="text-[11px] opacity-75">Criada por: {o.autor}</div>

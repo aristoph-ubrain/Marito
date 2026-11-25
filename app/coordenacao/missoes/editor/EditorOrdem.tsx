@@ -4,11 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ATRIBUTOS, siglaDe, type ChaveAtributo } from "@/lib/atributos";
-import { dois, mmss } from "@/lib/regras";
+import { dois, duracaoTexto, DURACOES_MISSAO } from "@/lib/regras";
 import { salvarOrdem } from "../actions";
 
 const ALAS = ["TÉRREO", "ALA A", "ALA B", "CONSULTÓRIOS", "ALA C", "CAPELA"];
-const DURACOES = [10, 15, 20, 30, 45, 60, 120, 300, 600, 1800, 3600];
 
 type Req = { atributo: ChaveAtributo; minimo: number };
 export type OrdemInicial = {
@@ -34,7 +33,7 @@ export function EditorOrdem({ inicial }: { inicial: OrdemInicial | null }) {
   const [salvando, iniciar] = useTransition();
   const [msg, setMsg] = useState<{ texto: string; ok: boolean } | null>(null);
   const bloqueada = !!inicial?.protegida;
-  const opcoesDuracao = [...new Set([...DURACOES, duracao])].sort((a, b) => a - b);
+  const opcoesDuracao = [...new Set([...DURACOES_MISSAO, duracao])].sort((a, b) => a - b);
 
   const mudarReq = (i: number, o: Partial<Req>) => {
     setReqs((r) => r.map((x, j) => (j === i ? { ...x, ...o } : x)));
@@ -125,7 +124,7 @@ export function EditorOrdem({ inicial }: { inicial: OrdemInicial | null }) {
           <div className="flex flex-col gap-1.5">
             <label htmlFor="duracao" className="rotulo">DURAÇÃO</label>
             <select id="duracao" className="campo" value={duracao} onChange={(e) => setDuracao(Number(e.target.value))}>
-              {opcoesDuracao.map((d) => <option key={d} value={d}>{mmss(d)}</option>)}
+              {opcoesDuracao.map((d) => <option key={d} value={d}>{duracaoTexto(d)}</option>)}
             </select>
           </div>
         </div>
@@ -141,7 +140,7 @@ export function EditorOrdem({ inicial }: { inicial: OrdemInicial | null }) {
             {reqs.map((r, i) => <span key={i} className="border-[1.5px] border-tinta px-1.5 py-0.5 text-[11px]">{siglaDe(r.atributo)} {dois(r.minimo)}</span>)}
           </div>
           <div className="flex justify-between border-t border-dashed border-tinta pt-1 text-xs">
-            <span><b>Recompensa:</b> +{xp} XP</span><span>Duração {mmss(duracao)}</span>
+            <span><b>Recompensa:</b> +{xp} XP</span><span>Duração {duracaoTexto(duracao)}</span>
           </div>
         </div>
       </div>

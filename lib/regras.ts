@@ -64,7 +64,28 @@ export function atendeRequisitos(
 
 export const dois = (n: number) => String(n).padStart(2, "0");
 export const milhar = (n: number) => n.toLocaleString("pt-BR");
+/** Relógio de contagem: mm:ss, ou h:mm:ss a partir de 1 hora. */
 export const mmss = (segundos: number) => {
   const s = Math.max(0, Math.ceil(segundos));
-  return `${dois(Math.floor(s / 60))}:${dois(s % 60)}`;
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h ? `${h}:${dois(m)}:${dois(s % 60)}` : `${dois(m)}:${dois(s % 60)}`;
 };
+
+/** Duração por extenso curto: "45 s", "5 min", "1 h 30 min". */
+export const duracaoTexto = (segundos: number) => {
+  const s = Math.max(0, Math.round(segundos));
+  if (s < 60) return `${s} s`;
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  if (!h) return r ? `${m} min ${r} s` : `${m} min`;
+  return m ? `${h} h ${m} min` : `${h} h`;
+};
+
+/** Durações que a coordenação pode escolher para uma missão (em segundos; máximo 24 h). */
+export const DURACOES_MISSAO = [
+  10, 15, 20, 30, 45,
+  60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 45 * 60,
+  3600, 2 * 3600, 3 * 3600, 4 * 3600, 6 * 3600, 8 * 3600, 12 * 3600, 24 * 3600,
+];
