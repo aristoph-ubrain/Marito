@@ -13,8 +13,12 @@ async function Livro() {
   const hoje = diaBrasilia(agora);
   const amanha = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
 
+  // As anotações da equipe ficam na ficha; aqui entram no livro junto com os demais lançamentos.
+  const notas = p.anotacoes.map((a) => ({ em: a.em, tipo: "eq" as const, codigo: "EQ", texto: `${a.autor}: ${a.texto}`, xp: undefined }));
+  const todos = [...registros, ...notas].sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime());
+
   const dias: DiaVisto[] = [];
-  for (const r of registros) {
+  for (const r of todos) {
     const em = new Date(r.em);
     const chave = diaBrasilia(em);
     let dia = dias.find((d) => d.chave === chave);

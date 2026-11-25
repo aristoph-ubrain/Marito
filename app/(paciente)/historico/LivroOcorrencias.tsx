@@ -9,13 +9,14 @@ export type DiaVisto = { chave: string; data: string; rasgado?: boolean; registr
 
 type Filtro = "todos" | TipoRegistro;
 const FILTROS: [Filtro, string][] = [
-  ["todos", "TODOS"], ["ev", "EVOLUÇÃO"], ["os", "ATIVIDADES"], ["ac", "ACESSOS"], ["cv", "CONVÍVIO"],
+  ["todos", "TODOS"], ["ev", "EVOLUÇÃO"], ["os", "ATIVIDADES"], ["ac", "ACESSOS"], ["cv", "CONVÍVIO"], ["eq", "EQUIPE"],
 ];
 const ETIQUETA: Record<TipoRegistro, { rotulo: string; cor: string }> = {
   ev: { rotulo: "EVOLUÇÃO", cor: "var(--color-verde)" },
   os: { rotulo: "ATIVIDADE", cor: "var(--color-tinta)" },
   ac: { rotulo: "ACESSO", cor: "var(--color-ocre)" },
   cv: { rotulo: "CONVÍVIO", cor: "var(--color-caneta)" },
+  eq: { rotulo: "EQUIPE", cor: "var(--color-carimbo)" },
 };
 const RASGO =
   "linear-gradient(135deg,#efe6d0 50%,transparent 50%) 0 0/14px 14px repeat-x,linear-gradient(225deg,#efe6d0 50%,transparent 50%) 0 0/14px 14px repeat-x,#2a211a";

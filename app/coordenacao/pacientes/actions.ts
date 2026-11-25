@@ -30,5 +30,6 @@ export async function anotar(prontuario: string, texto: string): Promise<Respost
   if (!r.matchedCount) return { ok: false, erro: "Paciente não encontrado." };
   revalidatePath("/coordenacao/pacientes");
   revalidatePath("/ficha");
-  return { ok: true, msg: "Anotação registrada na ficha." };
+  revalidatePath("/historico");
+  return { ok: true, msg: "Anotação registrada na ficha e no histórico." };
 }

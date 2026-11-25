@@ -1,6 +1,7 @@
 import { banco, umaVez } from "./db";
 
-export type TipoRegistro = "ev" | "os" | "ac" | "cv";
+/** eq = anotação da equipe: não é gravada aqui, vem das anotações da ficha (ver historico/page.tsx). */
+export type TipoRegistro = "ev" | "os" | "ac" | "cv" | "eq";
 
 export type Registro = {
   prontuario: string;
