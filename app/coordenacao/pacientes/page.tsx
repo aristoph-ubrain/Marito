@@ -5,9 +5,11 @@ import { coordenadorAtual } from "@/lib/dal";
 import { colecaoPacientes, normalizar } from "@/lib/pacientes";
 import { dataCurta } from "@/lib/regras";
 import { GestaoPacientes } from "./GestaoPacientes";
+import { listarClasses } from "@/lib/classes";
 
 async function Lista() {
   await coordenadorAtual();
+  const classes = await listarClasses();
   const docs = await (await colecaoPacientes())
     .find({}, { projection: { _id: 0, senhaHash: 0 } })
     .sort({ prontuario: 1 })
@@ -24,13 +26,15 @@ async function Lista() {
       pontos: p.pontos,
       atributos: ATRIBUTOS.map((a) => ({ sigla: a.sigla, nome: a.nome, valor: p.atributos[a.chave] })),
       diagnostico: p.diagnostico,
+      classe: p.classe,
+      classeDesde: p.classeEm ? dataCurta(new Date(p.classeEm)) : null,
       relato: p.relato ?? "",
       notas: [...p.anotacoes]
         .sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime())
         .map((a) => `${dataCurta(new Date(a.em))} · ${a.autor} · ${a.texto}`),
     };
   });
-  return <GestaoPacientes pacientes={pacientes} />;
+  return <GestaoPacientes pacientes={pacientes} classes={classes.map((c) => ({ nome: c.nome, cor: c.cor }))} />;
 }
 
 export default function CoordPacientesPage() {

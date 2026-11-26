@@ -5,10 +5,12 @@ import { BarraXp, Carimbo, Titulo } from "@/components/ui";
 import { pacienteAtual } from "@/lib/dal";
 import { dois, milhar, PONTOS_POR_NIVEL, xpParaProximoNivel } from "@/lib/regras";
 import { DistribuirPontos } from "./DistribuirPontos";
+import { classePorNome } from "@/lib/classes";
 
 async function Avaliacao() {
   const p = await pacienteAtual();
   const total = xpParaProximoNivel(p.nivel);
+  const classe = await classePorNome(p.classe);
   return (
     <>
       <section className="flex flex-col gap-2.5">
@@ -22,7 +24,7 @@ async function Avaliacao() {
           </div>
           <FotoProntuario opcao={p.foto} prontuario={p.prontuario} prefixo="aval" />
         </div>
-        <Carimbo>CLASSE: {p.classe}</Carimbo>
+        <Carimbo cor={classe.cor}>CLASSE: {p.classe}</Carimbo>
       </section>
 
       <section className="flex flex-col gap-2.5">

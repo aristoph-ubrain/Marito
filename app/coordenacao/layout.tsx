@@ -6,6 +6,7 @@ const LINKS = [
   { href: "/coordenacao/missoes", rotulo: "MISSÕES" },
   { href: "/coordenacao/pacientes", rotulo: "PACIENTES" },
   { href: "/coordenacao/alas", rotulo: "ALAS" },
+  { href: "/coordenacao/classes", rotulo: "CLASSES" },
   { href: "/coordenacao/chat", rotulo: "CHAT" },
 ];
 

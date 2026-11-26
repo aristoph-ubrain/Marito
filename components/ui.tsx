@@ -38,11 +38,11 @@ export function Carimbo({
   tamanho = 15,
 }: {
   children: ReactNode;
-  cor?: "carimbo" | "verde";
+  cor?: "carimbo" | "verde" | (string & {}); // ou uma cor em hex (classes)
   giro?: number;
   tamanho?: number;
 }) {
-  const c = cor === "verde" ? "var(--color-verde)" : "var(--color-carimbo)";
+  const c = cor === "verde" ? "var(--color-verde)" : cor === "carimbo" ? "var(--color-carimbo)" : cor;
   return (
     <span
       className="anim-carimbo inline-block self-start whitespace-nowrap px-2.5 py-1 font-maquina tracking-[2px] opacity-90"

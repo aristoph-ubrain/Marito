@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Anotacao, GradeAtributos, Titulo } from "@/components/ui";
 import { ATRIBUTOS } from "@/lib/atributos";
 import { dois, milhar, xpParaProximoNivel } from "@/lib/regras";
 import type { DiaVisto } from "@/lib/livro";
-import { anotar, historicoDoPaciente, salvarDiagnostico } from "./actions";
+import { anotar, historicoDoPaciente, reclassificar, salvarDiagnostico } from "./actions";
 
 const ETIQUETA: Record<string, { rotulo: string; cor: string }> = {
   ev: { rotulo: "EVOLUÇÃO", cor: "var(--color-verde)" },
@@ -25,16 +26,20 @@ export type PacienteResumo = {
   pontos: number;
   atributos: { sigla: string; nome: string; valor: number }[];
   diagnostico: string;
+  classe: string;
+  classeDesde: string | null;
   relato: string;
   notas: string[];
 };
 
-export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) {
+export function GestaoPacientes({ pacientes, classes }: { pacientes: PacienteResumo[]; classes: { nome: string; cor: string }[] }) {
   const router = useRouter();
   const [sel, setSel] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [nota, setNota] = useState("");
   const [diag, setDiag] = useState("");
+  const [novaClasse, setNovaClasse] = useState("");
+  const [motivo, setMotivo] = useState("");
   const [msg, setMsg] = useState<{ texto: string; ok: boolean } | null>(null);
   const [ocupado, iniciar] = useTransition();
   const [livro, setLivro] = useState<{ id: string; dias: DiaVisto[] | null; erro?: string } | null>(null);
@@ -49,6 +54,7 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
     });
   };
 
+  const corDe = (nome: string) => classes.find((c) => c.nome === nome)?.cor ?? "var(--color-tinta)";
   const q = busca.trim().toLowerCase();
   const lista = pacientes.filter((p) => !q || p.id.includes(q) || p.nome.toLowerCase().includes(q));
   const mostrarFantasma = !q || "0112".includes(q);
@@ -59,6 +65,8 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
     setMsg(null);
     setNota("");
     setDiag(p?.diagnostico ?? "");
+    setNovaClasse(p?.classe ?? "");
+    setMotivo("");
     setLivro(null);
   };
 
@@ -122,6 +130,25 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
                   <p className="m-0 text-[11px] leading-snug opacity-75">
                     XP e pontos vêm apenas das regras do jogo: missões, acesso diário e primeira visita a uma ala.
                   </p>
+                  <div className="flex flex-col gap-2 border-[1.5px] border-tinta p-2.5">
+                    <span className="rotulo">CLASSIFICAÇÃO</span>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="border-[2.5px] px-2 py-0.5 font-maquina text-sm tracking-[2px]"
+                        style={{ borderColor: corDe(p.classe), color: corDe(p.classe), transform: "rotate(-3deg)" }}>{p.classe}</span>
+                      <span className="text-[11px] opacity-80">{p.classeDesde ? `desde ${p.classeDesde}` : "desde a internação"}</span>
+                    </div>
+                    <label htmlFor="ncl" className="rotulo">RECLASSIFICAR COMO</label>
+                    <select id="ncl" className="campo" value={novaClasse} onChange={(e) => setNovaClasse(e.target.value)}>
+                      {!classes.some((c) => c.nome === p.classe) && <option value={p.classe}>{p.classe}</option>}
+                      {classes.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+                    </select>
+                    <label htmlFor="mot" className="rotulo">MOTIVO (APARECE NO AVISO DO PACIENTE)</label>
+                    <input id="mot" className="campo" maxLength={120} placeholder="Ex.: responde a chamados que ninguém fez" value={motivo}
+                      onChange={(e) => setMotivo(e.target.value)} />
+                    <button type="button" className="btn btn-pri" disabled={ocupado || novaClasse === p.classe}
+                      onClick={() => executar(() => reclassificar(p.id, novaClasse, motivo), () => setMotivo(""))}>RECLASSIFICAR</button>
+                    <span className="text-[11px] opacity-75">Classes e carimbos são editados em <Link href="/coordenacao/classes">CLASSES</Link>.</span>
+                  </div>
                   <div className="flex flex-col gap-2 border-[1.5px] border-tinta p-2.5">
                     <label htmlFor="diag" className="rotulo">DIAGNÓSTICO</label>
                     <input id="diag" className="campo" maxLength={200} value={diag} onChange={(e) => setDiag(e.target.value)} />

@@ -1,6 +1,6 @@
 /**
  * Avisos internos do paciente: o que mudou desde o último "CIENTE".
- * Assuntos: convívio, chat, áreas e equipe. A linha das 03:17 aparece sempre (narrativa).
+ * Assuntos: classificação, convívio, chat, áreas e equipe. A linha das 03:17 aparece sempre (narrativa).
  */
 import { contarMensagensDesde } from "./chat";
 import { colecaoConvivio } from "./convivio";
@@ -8,7 +8,7 @@ import { banco, umaVez } from "./db";
 import { buscarPaciente, colecaoPacientes } from "./pacientes";
 import { dataCurta, diaBrasilia, horaBrasilia } from "./regras";
 
-export type Aviso = { tipo: "convivio" | "chat" | "area" | "equipe"; texto: string; detalhe?: string; href: string };
+export type Aviso = { tipo: "convivio" | "chat" | "area" | "equipe" | "classe"; texto: string; detalhe?: string; href: string };
 export type Avisos = { desde: string; itens: Aviso[]; linha0317: string | null };
 
 async function colecaoAreas() {
@@ -32,6 +32,16 @@ export async function listarAvisos(eu: string): Promise<Avisos | null> {
   const desde = new Date(p.avisosVistosEm ?? p.criadoEm);
   const agora = new Date();
   const itens: Aviso[] = [];
+
+  // Classificação: reclassificação feita pela coordenação.
+  if (p.classeEm && new Date(p.classeEm) > desde) {
+    itens.push({
+      tipo: "classe",
+      texto: `Reclassificação: ${p.classeAnterior ?? "—"} → ${p.classe}`,
+      detalhe: p.classeMotivo ? `Motivo: ${p.classeMotivo}` : undefined,
+      href: "/ficha",
+    });
+  }
 
   // Convívio: pedidos recebidos e pedidos meus aceitos desde então (e o 0112, que insiste).
   const conv = await colecaoConvivio();

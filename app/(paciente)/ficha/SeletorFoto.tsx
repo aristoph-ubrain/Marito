@@ -9,7 +9,17 @@ import { escolherFoto } from "../actions";
  * Linha de identificação da ficha com a foto.
  * Sem foto: o seletor fica aberto. Com foto: o seletor some e reabre ao tocar na foto atual.
  */
-export function FotoFicha({ atual, prontuario, children }: { atual: OpcaoFoto | null; prontuario: string; children: React.ReactNode }) {
+export function FotoFicha({
+  atual,
+  prontuario,
+  sugerida = null,
+  children,
+}: {
+  atual: OpcaoFoto | null;
+  prontuario: string;
+  sugerida?: OpcaoFoto | null; // figurinha sugerida pela classe do paciente
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [erro, setErro] = useState("");
@@ -56,7 +66,7 @@ export function FotoFicha({ atual, prontuario, children }: { atual: OpcaoFoto | 
                 key={n}
                 type="button"
                 aria-pressed={atual === n}
-                aria-label={`Usar a foto opção ${String(n).padStart(2, "0")}${TEMA_FOTO[n] ? ` (${TEMA_FOTO[n]})` : ""}`}
+                aria-label={`Usar a foto opção ${String(n).padStart(2, "0")}${TEMA_FOTO[n] ? ` (${TEMA_FOTO[n]})` : ""}${sugerida === n ? ", sugerida pela equipe" : ""}`}
                 disabled={salvando}
                 onClick={() => escolher(n)}
                 className={`flex min-w-0 cursor-pointer flex-col items-center gap-2 border-2 px-0.5 pt-2 pb-1.5 font-mono text-tinta ${
@@ -65,6 +75,7 @@ export function FotoFicha({ atual, prontuario, children }: { atual: OpcaoFoto | 
               >
                 <Figurinha opcao={n} largura={88} giro={0} carimbo={false} prefixo={`sel${n}`} />
                 <span className="text-center text-[11px] leading-tight tracking-[1px]">OPÇÃO {String(n).padStart(2, "0")}{TEMA_FOTO[n] && <><br /><span className="text-[9px] opacity-70">{TEMA_FOTO[n]!.toUpperCase()}</span></>}</span>
+                {sugerida === n && <span className="border border-carimbo px-1 text-[9px] leading-tight tracking-[.5px] text-carimbo">SUGERIDA PELA EQUIPE</span>}
               </button>
             ))}
           </div>

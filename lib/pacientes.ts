@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { MongoServerError } from "mongodb";
 import { ATRIBUTO_INICIAL, ATRIBUTOS_REMOVIDOS, atributosIniciais, atributosZerados, CHAVES, type ChaveAtributo } from "./atributos";
 import { banco, umaVez } from "./db";
+import { nomeClassePadrao } from "./classes";
 import type { Automacoes } from "./habilidades";
 import { registrar } from "./historico";
 import { PONTOS_POR_NIVEL } from "./regras";
@@ -51,11 +52,14 @@ export type Paciente = {
   fila?: NaFila[]; // próximas ordens (VIT 10)
   ultimaDistribuicao?: Partial<Record<ChaveAtributo, number>>; // para o plano "repetir minha última"
   vistoEm?: Date; // último acesso: as automações param no teto offline depois dele
+  classeAnterior?: string; // carimbo riscado na ficha
+  classeEm?: Date; // última reclassificação
+  classeMotivo?: string;
 };
 
 /** Paciente com todos os campos de jogo preenchidos. */
-export type PacienteJogo = Required<Omit<Paciente, "recusou0112" | "aceitou0112" | "emCurso" | "foto" | "avisosVistosEm">> &
-  Pick<Paciente, "recusou0112" | "aceitou0112" | "foto" | "avisosVistosEm"> & { emCurso: EmCurso | null };
+type Opcionais = "recusou0112" | "aceitou0112" | "foto" | "avisosVistosEm" | "classeAnterior" | "classeEm" | "classeMotivo";
+export type PacienteJogo = Required<Omit<Paciente, Opcionais | "emCurso">> & Pick<Paciente, Opcionais> & { emCurso: EmCurso | null };
 
 export function normalizar(p: Paciente): PacienteJogo {
   return {
@@ -129,7 +133,7 @@ export async function criarPaciente(dados: NovoPaciente, senha: string): Promise
       ...dados,
       prontuario,
       senhaHash,
-      classe: "ANÔMALO",
+      classe: await nomeClassePadrao(),
       nivel: 1,
       xp: 0,
       // Pontos iniciais: o nível 1 concede os mesmos 3 pontos de cada nível.

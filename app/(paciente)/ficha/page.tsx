@@ -7,6 +7,7 @@ import { RelatoEditavel } from "./RelatoEditavel";
 import { ATRIBUTOS } from "@/lib/atributos";
 import { pacienteAtual } from "@/lib/dal";
 import { revelaTarjas } from "@/lib/habilidades";
+import { classePorNome } from "@/lib/classes";
 import { dataCurta, dois, milhar, xpParaProximoNivel } from "@/lib/regras";
 
 const SEXO = { M: "M", F: "F", O: "Outro" } as const;
@@ -17,6 +18,7 @@ async function Ficha() {
   const agora = new Date(); // a página já é dinâmica (lê a sessão)
   const amanha = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
   const semTarja = revelaTarjas(p.atributos); // Vínculo 15
+  const [classe, anterior] = await Promise.all([classePorNome(p.classe), p.classeAnterior ? classePorNome(p.classeAnterior) : null]);
   const anotacoes = [...p.anotacoes].sort((a, b) => new Date(a.em).getTime() - new Date(b.em).getTime());
 
   return (
@@ -35,7 +37,7 @@ async function Ficha() {
 
       <section className="flex flex-col gap-2.5">
         <Titulo>I. IDENTIFICAÇÃO</Titulo>
-        <FotoFicha atual={p.foto ?? null} prontuario={p.prontuario}>
+        <FotoFicha atual={p.foto ?? null} prontuario={p.prontuario} sugerida={classe.id ? classe.figurinha : null}>
           <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm leading-snug">
             <div><b>Nome:</b> {p.nome}</div>
             <div className="flex gap-3.5"><span><b>Idade:</b> {p.idade}</span><span><b>Sexo:</b> {SEXO[p.sexo] ?? p.sexo}</span></div>
@@ -44,7 +46,26 @@ async function Ficha() {
             <div><b>Profissão:</b> {p.profissao || "—"}</div>
           </div>
         </FotoFicha>
-        <Carimbo>CLASSE: {p.classe}</Carimbo>
+        {p.classeAnterior ? (
+          <div className="relative self-start pt-1.5 pb-1 pl-1">
+            <span className="relative block opacity-40" aria-hidden="true">
+              <Carimbo cor={anterior?.cor}>CLASSE: {p.classeAnterior}</Carimbo>
+              <span className="absolute top-1/2 right-0 left-0 h-0.5" style={{ background: anterior?.cor ?? "var(--color-carimbo)", transform: "rotate(-4deg)" }} />
+            </span>
+            <span className="sr-only">Classe anterior: {p.classeAnterior}. </span>
+            <span className="absolute top-[22px] left-[34px] bg-papel/55">
+              <Carimbo cor={classe.cor} giro={3}>CLASSE: {p.classe}</Carimbo>
+            </span>
+          </div>
+        ) : (
+          <Carimbo cor={classe.cor}>CLASSE: {p.classe}</Carimbo>
+        )}
+        {(p.classeEm || classe.descricao) && (
+          <p className={`m-0 text-xs leading-snug ${p.classeAnterior ? "mt-4" : ""}`}>
+            {p.classeEm && <b>Reclassificado em {dataCurta(new Date(p.classeEm))}. </b>}
+            {classe.descricao}
+          </p>
+        )}
       </section>
 
       <section className="flex flex-col gap-2 text-sm leading-snug">
@@ -60,7 +81,7 @@ async function Ficha() {
         <Titulo>III. SITUAÇÃO NO SISTEMA</Titulo>
         <div className="flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
           <div className="flex justify-between text-[13px]">
-            <span><b>Nível</b> {dois(p.nivel)} · Anômalo</span>
+            <span><b>Nível</b> {dois(p.nivel)} · {p.classe.charAt(0) + p.classe.slice(1).toLocaleLowerCase("pt-BR")}</span>
             <span>{milhar(p.xp)} / {milhar(total)} XP</span>
           </div>
           <BarraXp atual={p.xp} total={total} />
