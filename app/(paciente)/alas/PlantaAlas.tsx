@@ -47,23 +47,23 @@ export function PlantaAlas({
       router.refresh();
     });
 
-  const sala = ({ id, rotulo, extra, className = "" }: { id: string; rotulo: string; extra?: React.ReactNode; className?: string }) => {
+  /** Um cômodo da planta. Vários cômodos podem pertencer à mesma ala; tocar abre a ficha da ala. */
+  const sala = ({ id, rotulo, className = "", altura = 64, marcaAqui = true }: { id: string; rotulo: string; className?: string; altura?: number; marcaAqui?: boolean }) => {
     const a = porId[id];
     if (!a) return null;
     const ok = aberta(a);
+    const aqui = marcaAqui && alaAtualId === id;
     return (
-      <button key={id} type="button" onClick={() => alternar(id)} aria-pressed={sel === id}
-        aria-label={`${nome(a)}, ${ok ? "liberada" : "restrita"}${alaAtualId === id ? ", você está aqui" : ""}`}
-        className={`flex min-h-16 flex-col items-center justify-center gap-0.5 border-[1.5px] border-tinta p-1 text-[11px] tracking-[.5px] ${className} ${sel === id ? "outline outline-[3px] -outline-offset-[5px] outline-verde" : ""}`}
-        style={{ background: ok ? "var(--color-papel-claro)" : HACHURA, color: ok ? undefined : "#6b5f4e", borderStyle: a.secreta ? "dashed" : undefined }}>
-        <b>{rotulo}</b>
-        {extra ?? <span>nv {a.secreta && !ok ? "??" : dois(a.nivel)}{ok ? " ✓" : ""}</span>}
+      <button key={rotulo} type="button" onClick={() => alternar(id)} aria-pressed={sel === id}
+        aria-label={`${rotulo}, ${nome(a)}, ${ok ? "liberada" : "restrita"}${aqui ? ", você está aqui" : ""}`}
+        className={`flex flex-col items-center justify-center gap-0.5 border-[1.5px] border-tinta p-1 text-[10px] tracking-[.5px] ${className} ${sel === id ? "outline outline-[3px] -outline-offset-[5px] outline-verde" : ""}`}
+        style={{ minHeight: altura, background: ok ? "var(--color-papel-claro)" : HACHURA, color: ok ? undefined : "#6b5f4e", borderStyle: a.secreta ? "dashed" : undefined }}>
+        <b className="text-xs">{rotulo}</b>
+        <span>nv {a.secreta && !ok ? "??" : dois(a.nivel)}{ok ? " ✓" : ""}</span>
+        {aqui && <span className="bg-carimbo px-1 text-[#f4efe2]">VOCÊ ESTÁ AQUI</span>}
       </button>
     );
   };
-
-  const aqui = <span className="bg-carimbo px-1 text-[#f4efe2]">VOCÊ ESTÁ AQUI</span>;
-  const marcar = (id: string) => (alaAtualId === id ? aqui : undefined);
 
   return (
     <>
@@ -79,21 +79,28 @@ export function PlantaAlas({
         </div>
       </section>
 
-      <section className="flex flex-col gap-2 border-2 border-tinta bg-[#f4ecd8] p-2.5">
-        <div className="flex justify-between text-[11px] tracking-[.5px]"><span>PLANTA DE EVACUAÇÃO · BLOCO 1</span><span>N ↑</span></div>
-        <div className="grid grid-cols-3 gap-1">
-          {sala({ id: "P", rotulo: "CAPELA", extra: marcar("P") })}
-          {sala({ id: "C", rotulo: "ALA C", className: "col-span-2", extra: marcar("C") })}
-          {sala({ id: "B", rotulo: "ALA B", extra: marcar("B") })}
-          {sala({ id: "A", rotulo: "ALA A", extra: marcar("A") })}
-          {sala({ id: "K", rotulo: "CONSULT.", extra: marcar("K") })}
-          {sala({ id: "T", rotulo: "TÉRREO", className: "col-span-3", extra: marcar("T") ?? <span>recepção · farmácia · refeitório</span> })}
+      <section className="-mx-2 flex flex-col gap-2 border-2 border-tinta bg-[#f4ecd8] p-2.5">
+        <div className="flex justify-between text-[11px] tracking-[.5px]"><span>PLANTA DE EVACUAÇÃO · BLOCO 1 · TÉRREO</span><span>N ↑</span></div>
+        <div className="grid grid-cols-6 gap-1">
+          {sala({ id: "P", rotulo: "CAPELA", className: "col-span-2", altura: 96 })}
+          {sala({ id: "C", rotulo: "ALA C", className: "col-span-4", altura: 96 })}
+          {sala({ id: "A", rotulo: "DORMITÓRIO", className: "col-span-3", altura: 104 })}
+          {sala({ id: "A", rotulo: "INTERNAÇÃO", className: "col-span-3", altura: 104, marcaAqui: false })}
+          {sala({ id: "K", rotulo: "CONSULTÓRIO", className: "col-span-3", altura: 88 })}
+          {sala({ id: "T", rotulo: "REFEITÓRIO", className: "col-span-3", altura: 88, marcaAqui: false })}
+          {sala({ id: "T", rotulo: "FARMÁCIA", className: "col-span-2", altura: 84, marcaAqui: false })}
+          {sala({ id: "T", rotulo: "RECEPÇÃO", className: "col-span-4", altura: 84 })}
         </div>
+        <div className="text-center text-[10px] tracking-[1px]">▲ ENTRADA PRINCIPAL</div>
         <div className="flex items-center gap-1.5">
           <div className="flex-1 border-t-[1.5px] border-dashed border-tinta" />
           <span className="text-[10px]">ESCADA DE SERVIÇO ↓</span>
+          <div className="flex-1 border-t-[1.5px] border-dashed border-tinta" />
         </div>
-        {porId.X && sala({ id: "X", rotulo: nome(porId.X), extra: marcar("X") })}
+        <div className="grid grid-cols-1 gap-1">
+          {sala({ id: "B", rotulo: "SUBSOLO", altura: 72 })}
+          {porId.X && sala({ id: "X", rotulo: nome(porId.X), altura: 52 })}
+        </div>
         <div className="flex flex-wrap gap-3.5 text-[10px]">
           <span className="flex items-center gap-1"><span className="h-3 w-3 border-[1.5px] border-tinta bg-papel-claro" />liberada</span>
           <span className="flex items-center gap-1"><span className="h-3 w-3 border-[1.5px] border-tinta" style={{ background: HACHURA }} />restrita</span>
