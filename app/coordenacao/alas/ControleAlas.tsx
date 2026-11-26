@@ -10,6 +10,19 @@ type Situacao = "liberada" | "interditada";
 export type AlaConfig = { id: string; nome: string; sub: string; nivel: number; situacao: Situacao; secreta: boolean; pacientes: string };
 type Config = { nivel: number; situacao: Situacao };
 
+/** Cômodos da planta (os mesmos da tela do paciente): ala, nome, colunas de 6 e altura. */
+const COMODOS: { ala: string; nome: string; span: string; altura: number }[] = [
+  { ala: "P", nome: "CAPELA", span: "col-span-2", altura: 72 },
+  { ala: "C", nome: "ALA C", span: "col-span-4", altura: 72 },
+  { ala: "A", nome: "DORMITÓRIO", span: "col-span-3", altura: 72 },
+  { ala: "A", nome: "INTERNAÇÃO", span: "col-span-3", altura: 72 },
+  { ala: "K", nome: "CONSULTÓRIO", span: "col-span-3", altura: 64 },
+  { ala: "T", nome: "REFEITÓRIO", span: "col-span-3", altura: 64 },
+  { ala: "T", nome: "FARMÁCIA", span: "col-span-2", altura: 64 },
+  { ala: "T", nome: "RECEPÇÃO", span: "col-span-4", altura: 64 },
+];
+const HACHURA = "repeating-linear-gradient(45deg,#e2d7bd 0 5px,#efe6d0 5px 10px)";
+
 export function ControleAlas({ alas }: { alas: AlaConfig[] }) {
   const router = useRouter();
   const salvo: Record<string, Config> = Object.fromEntries(alas.map((a) => [a.id, { nivel: a.nivel, situacao: a.situacao }]));
@@ -20,6 +33,30 @@ export function ControleAlas({ alas }: { alas: AlaConfig[] }) {
   const mudar = (id: string, o: Partial<Config>) => { setAtual((a) => ({ ...a, [id]: { ...a[id], ...o } })); setMsg(null); };
   const alterada = (id: string) => atual[id].nivel !== salvo[id].nivel || atual[id].situacao !== salvo[id].situacao;
   const mudadas = alas.filter((a) => !a.secreta && alterada(a.id));
+  const porId = Object.fromEntries(alas.map((a) => [a.id, a]));
+  const [foco, setFoco] = useState<string | null>(null);
+
+  const irPara = (id: string) => {
+    setFoco(id);
+    document.getElementById(`ala-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const comodo = (ala: string, rotulo: string, className: string, altura: number) => {
+    const a = porId[ala];
+    if (!a) return null;
+    const c = atual[ala];
+    const fechada = c.situacao === "interditada";
+    return (
+      <button key={rotulo} type="button" onClick={() => irPara(ala)}
+        aria-label={`${rotulo}: ${a.nome}, nível ${dois(c.nivel)}, ${fechada ? "interditada" : "liberada por nível"}, ${a.pacientes} pacientes. Ir para a configuração.`}
+        className={`flex flex-col items-center justify-center gap-0.5 border-[1.5px] border-tinta p-1 text-[10px] tracking-[.5px] ${className} ${foco === ala ? "outline outline-[3px] -outline-offset-[5px] outline-verde" : ""}`}
+        style={{ minHeight: altura, background: fechada ? HACHURA : "var(--color-papel-claro)", borderStyle: a.secreta ? "dashed" : undefined, boxShadow: alterada(ala) ? "inset 0 -4px 0 var(--color-ocre)" : undefined }}>
+        <b className="text-[11px]">{rotulo}</b>
+        <span>nv {a.secreta ? "██" : dois(c.nivel)} · {a.pacientes} pac.</span>
+        {fechada && <span className="font-maquina text-[9px] tracking-[1px] text-carimbo">INTERDITADA</span>}
+      </button>
+    );
+  };
 
   const aplicar = () =>
     iniciar(async () => {
@@ -37,13 +74,30 @@ export function ControleAlas({ alas }: { alas: AlaConfig[] }) {
         </p>
       </section>
 
+      <section className="-mx-2 flex flex-col gap-2 border-2 border-tinta bg-[#f4ecd8] p-2.5" aria-label="Planta do hospital">
+        <div className="flex justify-between text-[11px] tracking-[.5px]"><span>PLANTA · VISÃO DA COORDENAÇÃO</span><span>N ↑</span></div>
+        <div className="grid grid-cols-6 gap-1">
+          {COMODOS.map((m) => comodo(m.ala, m.nome, m.span, m.altura))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="flex-1 border-t-[1.5px] border-dashed border-tinta" />
+          <span className="text-[10px]">ESCADA DE SERVIÇO ↓</span>
+          <div className="flex-1 border-t-[1.5px] border-dashed border-tinta" />
+        </div>
+        <div className="grid grid-cols-1 gap-1">
+          {comodo("B", "SUBSOLO", "", 56)}
+          {comodo("X", "ALA ██", "", 44)}
+        </div>
+        <span className="text-[10px] opacity-75">Toque num cômodo para ir à configuração da ala. Faixa ocre = alteração pendente.</span>
+      </section>
+
       <div className="flex flex-col gap-3">
         {alas.map((a) => {
           const c = atual[a.id];
           const mudou = !a.secreta && alterada(a.id);
           return (
-            <div key={a.id}
-              className={`flex flex-col gap-2.5 border-[1.5px] border-tinta p-3 ${a.secreta ? "border-dashed bg-papel-escuro" : "bg-papel-claro"}`}
+            <div key={a.id} id={`ala-${a.id}`}
+              className={`flex scroll-mt-4 flex-col gap-2.5 border-tinta p-3 ${foco === a.id ? "border-[3px]" : "border-[1.5px]"} ${a.secreta ? "border-dashed bg-papel-escuro" : "bg-papel-claro"}`}
               style={mudou ? { boxShadow: "inset 4px 0 0 var(--color-ocre)" } : undefined}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col gap-0.5">
