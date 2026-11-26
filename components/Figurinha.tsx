@@ -11,13 +11,13 @@ export const TEMA_FOTO: Record<OpcaoFoto, string | null> = {
 };
 
 const DESCRICAO: Record<OpcaoFoto, string> = {
-  1: "homem de óculos e barba, olhar fixo",
-  2: "mulher pálida de cabelo ruivo molhado, olhos arregalados",
-  3: "mulher de franja preta e olhos escuros, com um vulto atrás",
-  4: "homem idoso olhando para cima, com rostos de espíritos ao redor",
-  5: "mulher de óculos redondos com símbolos na pele e um círculo de giz atrás",
-  6: "pessoa de cabeça inclinada, olho leitoso e sorriso largo demais",
-  7: "mulher de olhos fechados e cabelo sobre o rosto, com a mão de alguém no ombro",
+  1: "homem de óculos e barba, gritando, de camisa de força; no reflexo da lente, a silhueta de alguém",
+  2: "mulher pálida de cabelo ruivo molhado e sardas, olhos arregalados, de camisa de força",
+  3: "mulher de franja preta e olheiras, camisola de gola alta, com um vulto atrás",
+  4: "homem idoso olhando para cima, de camisa de força, num céu estrelado com tentáculos e rostos de espíritos",
+  5: "mulher de óculos redondos com símbolos na pele, de camisa de força, diante de um círculo de giz brilhando",
+  6: "pessoa de cabeça inclinada, olho leitoso e sorriso largo demais, de camisa de força, com tentáculos atrás",
+  7: "mulher de olhos fechados e cabelo sobre o rosto, de camisa de força, com a mão de alguém no ombro",
   8: "menino de pijama iluminado por uma lanterna, com a sombra de um adulto na parede",
   9: "vigia de bigode e boné, com uma porta entreaberta e um rosto no vão atrás dele",
   10: "mulher de coque e gola de renda, com um segundo rosto virado para o lado",
