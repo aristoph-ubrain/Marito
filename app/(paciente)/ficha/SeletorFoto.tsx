@@ -13,11 +13,15 @@ export function FotoFicha({
   atual,
   prontuario,
   sugerida = null,
+  classe,
+  corClasse,
   children,
 }: {
   atual: OpcaoFoto | null;
   prontuario: string;
   sugerida?: OpcaoFoto | null; // figurinha sugerida pela classe do paciente
+  classe?: string;
+  corClasse?: string;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -49,7 +53,7 @@ export function FotoFicha({
             aria-expanded={mostrarSeletor}
             className="flex cursor-pointer flex-col items-center gap-2.5 border-0 bg-transparent p-0 font-mono text-tinta"
           >
-            <span key={atual} className="anim-revela"><FotoProntuario opcao={atual} prontuario={prontuario} prefixo="ficha" /></span>
+            <span key={atual} className="anim-revela"><FotoProntuario opcao={atual} prontuario={prontuario} prefixo="ficha" classe={classe} corClasse={corClasse} /></span>
             <span className="text-[10px] tracking-[.5px] opacity-70">toque para trocar</span>
           </button>
         ) : (

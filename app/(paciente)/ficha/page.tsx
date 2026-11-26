@@ -37,7 +37,7 @@ async function Ficha() {
 
       <section className="flex flex-col gap-2.5">
         <Titulo>I. IDENTIFICAÇÃO</Titulo>
-        <FotoFicha atual={p.foto ?? null} prontuario={p.prontuario} sugerida={classe.id ? classe.figurinha : null}>
+        <FotoFicha atual={p.foto ?? null} prontuario={p.prontuario} sugerida={classe.id ? classe.figurinha : null} classe={p.classe} corClasse={classe.cor}>
           <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm leading-snug">
             <div><b>Nome:</b> {p.nome}</div>
             <div className="flex gap-3.5"><span><b>Idade:</b> {p.idade}</span><span><b>Sexo:</b> {SEXO[p.sexo] ?? p.sexo}</span></div>

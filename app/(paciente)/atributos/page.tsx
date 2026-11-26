@@ -22,7 +22,7 @@ async function Avaliacao() {
             <div><b>Classificação:</b> {p.classe}</div>
             <div><b>Nível atual:</b> {dois(p.nivel)}</div>
           </div>
-          <FotoProntuario opcao={p.foto} prontuario={p.prontuario} prefixo="aval" />
+          <FotoProntuario opcao={p.foto} prontuario={p.prontuario} prefixo="aval" classe={p.classe} corClasse={classe.cor} />
         </div>
         <Carimbo cor={classe.cor}>CLASSE: {p.classe}</Carimbo>
       </section>

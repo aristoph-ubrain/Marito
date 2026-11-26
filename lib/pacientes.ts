@@ -157,7 +157,7 @@ export async function criarPaciente(dados: NovoPaciente, senha: string): Promise
       await col.insertOne({ ...paciente });
       await registrar(prontuario, [
         { em: agora, tipo: "ac", codigo: "AC-D", texto: `Internação registrada. Dormitório, leito ${paciente.quarto}.` },
-        { em: new Date(agora.getTime() + 1000), tipo: "ev", codigo: "EV-01", texto: "Classificação inicial registrada: ANÔMALO." },
+        { em: new Date(agora.getTime() + 1000), tipo: "ev", codigo: "EV-01", texto: `Classificação inicial registrada: ${paciente.classe}.` },
       ]);
       return paciente;
     } catch (e) {

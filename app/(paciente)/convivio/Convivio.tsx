@@ -83,7 +83,7 @@ export function Convivio({
             <div><b>Nível:</b> {c.nivel}</div>
             <div><b>Situação:</b> {c.situacao}</div>
           </div>
-          {c.foto ? <Figurinha opcao={c.foto} prontuario={c.prontuario} largura={104} giro={-2} prefixo={`col${c.prontuario}`} /> : <Foto3x4 largura={90} giro={-2} />}
+          {c.foto ? <Figurinha opcao={c.foto} prontuario={c.prontuario} largura={104} giro={-2} prefixo={`col${c.prontuario}`} classe={c.classe} corClasse={c.classeCor} /> : <Foto3x4 largura={90} giro={-2} />}
         </section>
         <section className="flex flex-col gap-2">
           <Titulo>ATRIBUTOS</Titulo>

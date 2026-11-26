@@ -34,6 +34,8 @@ export function Figurinha({
   giro = 2,
   carimbo = true,
   prefixo,
+  classe = "ANÔMALO",
+  corClasse = "var(--color-carimbo)",
 }: {
   opcao: OpcaoFoto;
   prontuario?: string;
@@ -41,6 +43,8 @@ export function Figurinha({
   giro?: number;
   carimbo?: boolean;
   prefixo: string;
+  classe?: string; // texto do carimbo da foto
+  corClasse?: string;
 }) {
   const k = largura / 340;
   // O conteúdo do SVG é nosso (gerado do canvas), sem dados do usuário.
@@ -73,8 +77,8 @@ export function Figurinha({
             <b className="font-maquina text-[26px] font-normal">{prontuario ?? "0000"}</b>
           </div>
           {carimbo && (
-            <span className="px-[7px] py-0.5 font-maquina text-xs tracking-[1.5px] text-carimbo" style={{ border: "2px solid var(--color-carimbo)", transform: "rotate(-5deg)" }}>
-              ANÔMALO
+            <span className="px-[7px] py-0.5 font-maquina text-xs tracking-[1.5px]" style={{ border: `2px solid ${corClasse}`, color: corClasse, transform: "rotate(-5deg)" }}>
+              {classe}
             </span>
           )}
         </div>
@@ -85,8 +89,22 @@ export function Figurinha({
 }
 
 /** Foto da ficha: a figurinha escolhida, ou o 3×4 vazio enquanto não houver escolha. */
-export function FotoProntuario({ opcao, prontuario, largura = 116, prefixo }: { opcao?: OpcaoFoto | null; prontuario: string; largura?: number; prefixo: string }) {
-  if (opcao) return <Figurinha opcao={opcao} prontuario={prontuario} largura={largura} prefixo={prefixo} />;
+export function FotoProntuario({
+  opcao,
+  prontuario,
+  largura = 116,
+  prefixo,
+  classe,
+  corClasse,
+}: {
+  opcao?: OpcaoFoto | null;
+  prontuario: string;
+  largura?: number;
+  prefixo: string;
+  classe?: string;
+  corClasse?: string;
+}) {
+  if (opcao) return <Figurinha opcao={opcao} prontuario={prontuario} largura={largura} prefixo={prefixo} classe={classe} corClasse={corClasse} />;
   return (
     <div className="relative shrink-0 bg-[#f8f5ec] p-1.5 pb-[18px] shadow-[0_2px_6px_rgba(0,0,0,.3)]" style={{ width: largura * 0.9, transform: "rotate(2deg)" }}>
       <div className="flex items-end justify-center overflow-hidden bg-[#cfc8b8]" style={{ height: largura * 0.98 }}>
