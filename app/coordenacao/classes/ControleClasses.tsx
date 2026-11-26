@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Anotacao, Carimbo, Titulo } from "@/components/ui";
 import { Figurinha, OPCOES_FOTO, type OpcaoFoto } from "@/components/Figurinha";
-import { CORES_CARIMBO, LIMITE_DESCRICAO_CLASSE, LIMITE_NOME_CLASSE, type Classe } from "@/lib/classes";
+import { CORES_CARIMBO, LIMITE_DESCRICAO_CLASSE, LIMITE_NOME_CLASSE, type Classe } from "@/lib/classes-base";
 import { dois } from "@/lib/regras";
 import { apagarClasse, novaClasse, salvarClasse } from "./actions";
 

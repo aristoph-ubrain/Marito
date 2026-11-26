@@ -3,32 +3,10 @@
  * (não muda XP, atributos nem missões). O catálogo fica na coleção `classes`;
  * o paciente guarda o nome da classe em `classe`.
  */
-import type { OpcaoFoto } from "@/components/Figurinha";
 import { banco, umaVez } from "./db";
+import { NOME_PADRAO, type Classe } from "./classes-base";
 
-export type Classe = {
-  id: string;
-  nome: string;
-  descricao: string;
-  cor: string; // uma de CORES_CARIMBO
-  figurinha: OpcaoFoto; // sugerida na troca de foto
-  padrao?: boolean; // classe de quem é internado (não pode ser apagada)
-  ordem: number;
-};
-
-export const CORES_CARIMBO = [
-  { nome: "Vermelho carimbo", valor: "#8a3b2e" },
-  { nome: "Verde", valor: "#2f5d46" },
-  { nome: "Azul tinta", valor: "#2c4a8a" },
-  { nome: "Roxo", valor: "#5a3a6e" },
-  { nome: "Ocre", valor: "#7a5a2a" },
-  { nome: "Preto", valor: "#2b2620" },
-] as const;
-export const ehCor = (c: unknown): c is string => CORES_CARIMBO.some((x) => x.valor === c);
-
-export const NOME_PADRAO = "ANÔMALO";
-export const LIMITE_NOME_CLASSE = 18;
-export const LIMITE_DESCRICAO_CLASSE = 240;
+export * from "./classes-base";
 
 const INICIAIS: Classe[] = [
   { id: "anomalo", nome: NOME_PADRAO, descricao: "Classificação de entrada. Comportamento fora dos padrões, ainda sem perfil definido.", cor: "#8a3b2e", figurinha: 1, padrao: true, ordem: 1 },
@@ -62,6 +40,3 @@ export async function nomeClassePadrao(): Promise<string> {
   return c?.nome ?? NOME_PADRAO;
 }
 
-/** Nome em maiúsculas, sem espaços duplos. */
-export const limparNomeClasse = (n: unknown) =>
-  typeof n === "string" ? n.replace(/\s+/g, " ").trim().toLocaleUpperCase("pt-BR").slice(0, LIMITE_NOME_CLASSE) : "";
