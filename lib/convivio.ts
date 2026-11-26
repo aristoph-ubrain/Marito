@@ -1,3 +1,4 @@
+import { listarClasses } from "./classes";
 import { banco, umaVez } from "./db";
 import { buscarPaciente, colecaoPacientes, normalizar } from "./pacientes";
 import { diaBrasilia, dois } from "./regras";
@@ -17,6 +18,8 @@ export type Colega = {
   situacao: string;
   cor: string;
   atributos: (number | "?")[];
+  classe: string;
+  classeCor: string; // cor do carimbo da classe
   foto?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 };
 
@@ -35,6 +38,8 @@ const FANTASMA: Colega = {
   situacao: "███",
   cor: "var(--color-carimbo)",
   atributos: Array(6).fill("?"),
+  classe: "███████",
+  classeCor: "var(--color-tinta)",
 };
 
 /** Lista amigos, pedidos recebidos e enviados do paciente `eu`. Só expõe dados públicos. */
@@ -49,6 +54,7 @@ export async function listarConvivio(eu: string) {
   const docs = ids.length
     ? await (await colecaoPacientes()).find({ prontuario: { $in: ids } }, { projection: { _id: 0, senhaHash: 0 } }).toArray()
     : [];
+  const cores = new Map((await listarClasses()).map((c) => [c.nome, c.cor]));
   const publico = (id: string): Colega | null => {
     const d = docs.find((x) => x.prontuario === id);
     if (!d) return null;
@@ -61,6 +67,8 @@ export async function listarConvivio(eu: string) {
       situacao: p.emCurso ? `Em atividade · ${p.emCurso.codigo}` : "Acordado",
       cor: p.emCurso ? "var(--color-verde)" : "var(--color-tinta-suave)",
       atributos: Object.values(p.atributos),
+      classe: p.classe,
+      classeCor: cores.get(p.classe) ?? "var(--color-tinta)",
       foto: p.foto,
     };
   };

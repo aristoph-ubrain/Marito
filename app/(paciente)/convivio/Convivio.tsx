@@ -79,7 +79,7 @@ export function Convivio({
         <section className="flex items-start gap-3.5">
           <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm leading-snug">
             <div><b>Nome:</b> {c.nome}</div>
-            <div><b>Classificação:</b> ANÔMALO</div>
+            <div><b>Classificação:</b> <span className="font-maquina tracking-[1px]" style={{ color: c.classeCor }}>{c.classe}</span></div>
             <div><b>Nível:</b> {c.nivel}</div>
             <div><b>Situação:</b> {c.situacao}</div>
           </div>
@@ -210,7 +210,7 @@ export function Convivio({
               {a.foto ? <Figurinha opcao={a.foto} largura={52} giro={0} carimbo={false} prefixo={`am${a.prontuario}`} /> : <Foto3x4 largura={44} giro={0} />}
               <div className="flex flex-1 flex-col gap-0.5">
                 <span className="font-maquina text-[17px]">{a.nome}</span>
-                <span className="text-xs">ANÔMALO · Nv. {a.nivel}</span>
+                <span className="text-xs"><span style={{ color: a.classeCor }}>{a.classe}</span> · Nv. {a.nivel}</span>
                 <span className="text-xs" style={{ color: a.cor }}>● {a.situacao}</span>
               </div>
             </div>
