@@ -152,7 +152,7 @@ export function GestaoPacientes({ pacientes, classes }: { pacientes: PacienteRes
                   <div className="flex flex-col gap-2 border-[1.5px] border-tinta p-2.5">
                     <label htmlFor="diag" className="rotulo">DIAGNÓSTICO</label>
                     <input id="diag" className="campo" maxLength={200} value={diag} onChange={(e) => setDiag(e.target.value)} />
-                    <button type="button" className="btn" disabled={ocupado || diag.trim() === p.diagnostico}
+                    <button type="button" className="btn border-carimbo bg-carimbo tracking-[1px] text-[#f4efe2]" disabled={ocupado || diag.trim() === p.diagnostico}
                       onClick={() => executar(() => salvarDiagnostico(p.id, diag))}>SALVAR DIAGNÓSTICO</button>
                   </div>
                   <div className="flex flex-col gap-2 border-[1.5px] border-tinta p-2.5">
