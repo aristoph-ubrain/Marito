@@ -4,10 +4,11 @@ import { ChatGeral } from "@/components/ChatGeral";
 import { Anotacao, Titulo } from "@/components/ui";
 import { listarMensagens } from "@/lib/chat";
 import { pacienteAtual } from "@/lib/dal";
+import { revela0112 } from "@/lib/habilidades";
 
 async function Canal() {
   const p = await pacienteAtual();
-  const msgs = await listarMensagens(p.prontuario);
+  const msgs = await listarMensagens(p.prontuario, undefined, revela0112(p.atributos));
   return (
     <>
       <section className="flex flex-col gap-1">

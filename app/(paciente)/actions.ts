@@ -16,6 +16,18 @@ import { ehOpcaoFoto } from "@/components/Figurinha";
 import { LIMITE_RELATO, validarRelato } from "@/lib/cadastro";
 import { enviarBilhete, LIMITE_BILHETE, rasgarBilhete } from "@/lib/bilhetes";
 import { BONUS_PRIMEIRA_VISITA_ALA, diaBrasilia, dois } from "@/lib/regras";
+import {
+  AUTOMACOES,
+  automacaoLiberada,
+  duracaoComHabilidade,
+  ehAutomacao,
+  TAMANHO_FILA,
+  xpComHabilidade,
+  type Automacao,
+  type Plano,
+} from "@/lib/habilidades";
+import type { Ordem } from "@/lib/ordens";
+import type { PacienteJogo } from "@/lib/pacientes";
 
 export type Resposta = { ok: true; msg?: string } | { ok: false; erro: string };
 const SEM_SESSAO: Resposta = { ok: false, erro: "Sessão expirada. Entre novamente." };
@@ -41,7 +53,7 @@ export async function registrarAvaliacao(alocacao: Record<string, unknown>): Pro
     for (const c of CHAVES) atributos[c] += valores[c] ?? 0;
     const resumo = CHAVES.filter((c) => valores[c]).map((c) => `+${valores[c]} ${nomeDe(c)}`).join(", ");
     return {
-      set: { atributos, pontos: p.pontos - total },
+      set: { atributos, pontos: p.pontos - total, ultimaDistribuicao: valores },
       historico: [{ em: agora, tipo: "ev", codigo: "EV-AV", texto: `Avaliação registrada: ${resumo}.` }],
     };
   });
@@ -79,36 +91,98 @@ export async function editarRelato(texto: string): Promise<Resposta> {
 
 /* ---------- Missões ---------- */
 
+/** Confere se o paciente pode fazer a ordem agora (ala e nível). */
+function podeFazer(ordem: Ordem, ala: Awaited<ReturnType<typeof listarAlas>>[number] | undefined, p: Pick<PacienteJogo, "nivel">): string | null {
+  if (!ala) return "Ala da ordem não encontrada. Procure a coordenação.";
+  if (!alaAcessivel(ala, p.nivel)) return `Acesso à ${ala.nome} não autorizado.`;
+  if (p.nivel < nivelDaOrdem(ordem)) return `Nível insuficiente: esta ordem pede nível ${dois(nivelDaOrdem(ordem))}.`;
+  return null;
+}
+
+/** A ordem como entra em curso ou na fila: duração e XP com as habilidades do paciente. */
+const comHabilidades = (ordem: Ordem, p: Pick<PacienteJogo, "atributos">) => ({
+  codigo: ordem.codigo,
+  titulo: ordem.titulo,
+  duracao: duracaoComHabilidade(ordem.duracao, p.atributos),
+  xp: xpComHabilidade(ordem.xp, ordem.duracao, p.atributos),
+});
+
+async function ordemPublicada(codigo: unknown) {
+  if (typeof codigo !== "string") return null;
+  const ordem = await buscarOrdem(codigo);
+  if (!ordem || ordem.situacao !== "pub") return null;
+  const ala = (await listarAlas()).find((a) => a.nome === ordem.ala);
+  return { ordem, ala };
+}
+
 export async function iniciarMissao(codigo: string): Promise<Resposta> {
   const prontuario = await prontuarioDaSessao();
   if (!prontuario) return SEM_SESSAO;
-  if (typeof codigo !== "string") return { ok: false, erro: "Missão inválida." };
-
-  const ordem = await buscarOrdem(codigo);
-  if (!ordem || ordem.situacao !== "pub") return { ok: false, erro: "Esta ordem não está mais disponível." };
-  const ala = (await listarAlas()).find((a) => a.nome === ordem.ala);
+  const achada = await ordemPublicada(codigo);
+  if (!achada) return { ok: false, erro: "Esta ordem não está mais disponível." };
+  const { ordem, ala } = achada;
 
   const r = await mutarPaciente(prontuario, (p, agora) => {
     // Aplica primeiro o que estiver pendente (missão anterior terminada, virada do dia).
     const pend = calcularPendencias(p, agora);
-    const atual = pend && !("erro" in pend) ? { ...p, ...pend.set } : p;
+    const ok = pend && !("erro" in pend) ? pend : null;
+    const atual = ok ? { ...p, ...ok.set } : p;
 
     if (atual.emCurso) return { erro: "Já existe uma atividade em andamento." };
-    if (!ala) return { erro: "Ala da ordem não encontrada. Procure a coordenação." };
-    if (!alaAcessivel(ala, atual.nivel)) return { erro: `Acesso à ${ala.nome} não autorizado.` };
-    if (atual.nivel < nivelDaOrdem(ordem)) return { erro: `Nível insuficiente: esta ordem pede nível ${dois(nivelDaOrdem(ordem))}.` };
+    const erro = podeFazer(ordem, ala, atual);
+    if (erro) return { erro };
 
     return {
-      set: {
-        ...(pend && !("erro" in pend) ? pend.set : {}),
-        emCurso: { codigo: ordem.codigo, titulo: ordem.titulo, inicio: agora, duracao: ordem.duracao, xp: ordem.xp },
-      },
-      historico: pend && !("erro" in pend) ? pend.historico : undefined,
-      depois: pend && !("erro" in pend) ? pend.depois : undefined,
+      set: { ...(ok?.set ?? {}), vistoEm: agora, emCurso: { ...comHabilidades(ordem, atual), inicio: agora } },
+      historico: ok?.historico,
+      depois: ok?.depois,
     };
   });
   if (!r.ok) return { ok: false, erro: r.erro };
   if (ala) await visitar(prontuario, ala.nome);
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** Põe a ordem na fila (VIT 10). Sem nada em andamento, ela começa na hora. */
+export async function enfileirarMissao(codigo: string): Promise<Resposta> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return SEM_SESSAO;
+  const achada = await ordemPublicada(codigo);
+  if (!achada) return { ok: false, erro: "Esta ordem não está mais disponível." };
+  const { ordem, ala } = achada;
+  let comecar = false;
+  const r = await mutarPaciente(prontuario, (p, agora) => {
+    comecar = false;
+    const pend = calcularPendencias(p, agora);
+    const ok = pend && !("erro" in pend) ? pend : null;
+    const atual = ok ? { ...p, ...ok.set } : p;
+    if (!automacaoLiberada("fila", atual.atributos)) return { erro: "A fila de ordens abre com Vitalidade 10." };
+    if (!atual.automacoes.fila) return { erro: "Ligue a fila de ordens em ATRIBUTOS." };
+    if (!atual.emCurso) {
+      comecar = true;
+      return null;
+    }
+    if (atual.fila.length >= TAMANHO_FILA) return { erro: `A fila já tem ${TAMANHO_FILA} ordens.` };
+    const erro = podeFazer(ordem, ala, atual);
+    if (erro) return { erro };
+    return { set: { ...(ok?.set ?? {}), fila: [...atual.fila, comHabilidades(ordem, atual)] }, historico: ok?.historico, depois: ok?.depois };
+  });
+  if (!r.ok) return { ok: false, erro: r.erro };
+  if (comecar) return iniciarMissao(codigo);
+  revalidatePath("/", "layout");
+  return { ok: true, msg: `${ordem.codigo} na fila.` };
+}
+
+export async function removerDaFila(indice: number): Promise<Resposta> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return SEM_SESSAO;
+  if (!Number.isInteger(indice) || indice < 0) return { ok: false, erro: "Ordem não encontrada na fila." };
+  const r = await mutarPaciente(prontuario, (p) => {
+    if (indice >= p.fila.length) return null;
+    return { set: { fila: p.fila.filter((_, i) => i !== indice) } };
+  });
+  if (!r.ok) return { ok: false, erro: r.erro };
   revalidatePath("/", "layout");
   return { ok: true };
 }
@@ -120,7 +194,12 @@ export async function interromperMissao(): Promise<Resposta> {
     if (!p.emCurso) return null;
     // Se já terminou, conclui em vez de interromper.
     const pend = calcularPendencias(p, agora);
-    if (pend && !("erro" in pend) && pend.set.emCurso === null) return pend;
+    if (pend && !("erro" in pend) && pend.set.emCurso !== undefined) return { ...pend, set: { ...pend.set, emCurso: null } };
+    // Com a fila ligada, a próxima ordem começa no lugar da interrompida.
+    if (p.automacoes.fila && automacaoLiberada("fila", p.atributos) && p.fila.length) {
+      const [prox, ...resto] = p.fila;
+      return { set: { emCurso: { ...prox, inicio: agora }, fila: resto, vistoEm: agora } };
+    }
     return { set: { emCurso: null } };
   });
   if (!r.ok) return { ok: false, erro: r.erro };
@@ -132,10 +211,16 @@ export async function interromperMissao(): Promise<Resposta> {
 export async function sincronizar(): Promise<Resposta & { restanteMs?: number }> {
   const prontuario = await prontuarioDaSessao();
   if (!prontuario) return SEM_SESSAO;
-  const r = await mutarPaciente(prontuario, calcularPendencias);
+  let mudou = false;
+  const r = await mutarPaciente(prontuario, (p, agora) => {
+    const pend = calcularPendencias(p, agora);
+    mudou = !!pend && !("erro" in pend) && pend.set.emCurso !== undefined;
+    return pend;
+  });
   if (!r.ok) return { ok: false, erro: r.erro };
   const em = r.paciente.emCurso;
-  if (em) {
+  // Missão concluída (e talvez outra já começou pela fila ou repetição): a tela precisa recarregar.
+  if (em && !mudou) {
     // Ainda não terminou pelo relógio do servidor: devolve quanto falta, sem revalidar.
     const restanteMs = new Date(em.inicio).getTime() + em.duracao * 1000 - Date.now();
     if (restanteMs > 0) return { ok: true, restanteMs };
@@ -315,4 +400,39 @@ export async function cienteAvisos(): Promise<Resposta> {
   if (!eu) return SEM_SESSAO;
   await marcarAvisosVistos(eu);
   return { ok: true };
+}
+
+/* ---------- Habilidades (automações dos marcos) ---------- */
+
+export async function alternarAutomacao(chave: Automacao, ligado: boolean): Promise<Resposta> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return SEM_SESSAO;
+  if (!ehAutomacao(chave) || typeof ligado !== "boolean") return { ok: false, erro: "Opção inválida." };
+  const r = await mutarPaciente(prontuario, (p) => {
+    if (!automacaoLiberada(chave, p.atributos)) {
+      const a = AUTOMACOES[chave];
+      return { erro: `Abre com ${nomeDe(a.chave)} ${dois(a.marco)}.` };
+    }
+    if (!!p.automacoes[chave] === ligado) return null;
+    return { set: { automacoes: { ...p.automacoes, [chave]: ligado }, ...(chave === "fila" && !ligado ? { fila: [] } : {}) } };
+  });
+  if (!r.ok) return { ok: false, erro: r.erro };
+  // Ao ligar a distribuição automática, os pontos parados já são distribuídos.
+  if (ligado && chave === "pontos") await mutarPaciente(prontuario, calcularPendencias);
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function escolherPlano(plano: Plano): Promise<Resposta> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return SEM_SESSAO;
+  const valido =
+    plano && typeof plano === "object" &&
+    (plano.tipo === "igual" || plano.tipo === "ultima" || (plano.tipo === "um" && ehChave(plano.chave)));
+  if (!valido) return { ok: false, erro: "Plano inválido." };
+  const limpo: Plano = plano.tipo === "um" ? { tipo: "um", chave: plano.chave } : { tipo: plano.tipo };
+  const r = await mutarPaciente(prontuario, (p) => ({ set: { automacoes: { ...p.automacoes, plano: limpo } } }));
+  if (!r.ok) return { ok: false, erro: r.erro };
+  revalidatePath("/", "layout");
+  return { ok: true, msg: "Plano registrado." };
 }

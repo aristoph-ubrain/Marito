@@ -24,12 +24,15 @@ async function colecao() {
   return col;
 }
 
-const vista = (d: Doc, eu?: string): MensagemVista => ({
+/** Nome sem tarja do autor das falas do fantasma (segredo de Vínculo 5). */
+const AUTOR_REVELADO = "Pront. 0112";
+
+const vista = (d: Doc, eu?: string, revelar = false): MensagemVista => ({
   id: String(d._id),
   em: d.em.getTime(),
   hora: horaBrasilia(d.em),
   tipo: d.tipo,
-  autor: d.autor,
+  autor: revelar && d.tipo === "fantasma" ? AUTOR_REVELADO : d.autor,
   minha: !!eu && d.prontuario === eu,
   texto: d.texto,
 });
@@ -55,9 +58,10 @@ export async function publicar(m: Omit<Doc, "em" | "_id">) {
 
 /**
  * Mensagens das últimas 24 h, em ordem. Com `depois`, só as mais novas que esse instante.
+ * Com `revelar` (paciente com Vínculo 5), o autor do fantasma aparece sem tarja.
  * Também dispara a mensagem do "████████", uma a cada 2 horas (narrativa).
  */
-export async function listarMensagens(eu?: string, depois?: number): Promise<MensagemVista[]> {
+export async function listarMensagens(eu?: string, depois?: number, revelar = false): Promise<MensagemVista[]> {
   const col = await colecao();
   await talvezFantasma(col);
   const limite = new Date(Date.now() - DURACAO_S * 1000);
@@ -67,7 +71,7 @@ export async function listarMensagens(eu?: string, depois?: number): Promise<Men
     .sort({ em: -1 })
     .limit(300)
     .toArray();
-  return docs.reverse().map((d) => vista(d, eu));
+  return docs.reverse().map((d) => vista(d, eu, revelar));
 }
 
 const FALAS_FANTASMA = [

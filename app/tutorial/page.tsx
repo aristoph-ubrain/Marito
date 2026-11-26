@@ -57,13 +57,18 @@ export default function TutorialPage() {
           </p>
         </Passo>
 
-        <Passo n={2} titulo="AVALIAÇÃO DE ATRIBUTOS" onde="ATRIBUTOS">
+        <Passo n={2} titulo="ATRIBUTOS E HABILIDADES" onde="ATRIBUTOS">
           <p className="m-0">
             Todo interno começa com {ATRIBUTO_INICIAL} em cada um dos {ATRIBUTOS.length} atributos e <b>{PONTOS_POR_NIVEL} pontos</b>{" "}
             para distribuir. Cada nível novo dá mais {PONTOS_POR_NIVEL}. Não há teto.
           </p>
           <p className="m-0 text-xs opacity-85">{ATRIBUTOS.map((a) => a.sigla).join(" · ")}</p>
-          <p className="m-0">Os atributos registram a sua avaliação na ficha. Eles não liberam ordens de atividade.</p>
+          <p className="m-0">
+            Cada atributo tem uma <b>habilidade</b>: AGI encurta as missões, FOR e CON aumentam a XP, VIT estende o tempo em que as automações
+            seguem com você fora, SOR pode fazer a missão contar duas vezes e VIN… escuta. A cada 5 pontos, o atributo abre um marco: com 10 em AGI,
+            VIT ou CON você liga repetir missão, fila de ordens ou distribuição automática dos pontos. Tudo na mesma tela de atributos.
+          </p>
+          <p className="m-0">Os atributos não liberam ordens de atividade: isso é pelo nível.</p>
         </Passo>
 
         <Passo n={3} titulo="ORDENS DE ATIVIDADE" onde="MISSÕES">

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { MongoServerError } from "mongodb";
 import { ATRIBUTO_INICIAL, ATRIBUTOS_REMOVIDOS, atributosIniciais, atributosZerados, CHAVES, type ChaveAtributo } from "./atributos";
 import { banco, umaVez } from "./db";
+import type { Automacoes } from "./habilidades";
 import { registrar } from "./historico";
 import { PONTOS_POR_NIVEL } from "./regras";
 
@@ -10,6 +11,8 @@ const HASH_FALSO = bcrypt.hashSync("prontuario-inexistente", 10);
 
 export type Anotacao = { em: Date; autor: string; texto: string };
 export type EmCurso = { codigo: string; titulo: string; inicio: Date; duracao: number; xp: number };
+/** Ordem na fila: duração e XP já com as habilidades aplicadas. */
+export type NaFila = Omit<EmCurso, "inicio">;
 
 export type Paciente = {
   prontuario: string; // "0347"
@@ -44,6 +47,10 @@ export type Paciente = {
   recusou0112?: string; // dia em que recusou o pedido do 0112
   aceitou0112?: boolean;
   avisosVistosEm?: Date; // último "CIENTE" nos avisos
+  automacoes?: Automacoes; // interruptores das habilidades (marcos)
+  fila?: NaFila[]; // próximas ordens (VIT 10)
+  ultimaDistribuicao?: Partial<Record<ChaveAtributo, number>>; // para o plano "repetir minha última"
+  vistoEm?: Date; // último acesso: as automações param no teto offline depois dele
 };
 
 /** Paciente com todos os campos de jogo preenchidos. */
@@ -65,6 +72,10 @@ export function normalizar(p: Paciente): PacienteJogo {
     concluidas: p.concluidas ?? {},
     diagnostico: p.diagnostico ?? "Em avaliação",
     anotacoes: p.anotacoes ?? [],
+    automacoes: p.automacoes ?? {},
+    fila: p.fila ?? [],
+    ultimaDistribuicao: p.ultimaDistribuicao ?? {},
+    vistoEm: p.vistoEm ?? p.criadoEm,
   };
 }
 

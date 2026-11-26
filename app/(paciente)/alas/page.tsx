@@ -4,6 +4,7 @@ import { alaAcessivel, listarAlas } from "@/lib/alas";
 import { pacienteAtual } from "@/lib/dal";
 import { listarMissoesPublicadas } from "@/lib/ordens";
 import { PlantaAlas } from "./PlantaAlas";
+import { revelaAlaZero } from "@/lib/habilidades";
 
 /** Nome da ala secreta se revela letra a letra a partir do nível 6 (mascarado no servidor). */
 function nomeSecreto(nome: string, nivel: number) {
@@ -15,6 +16,8 @@ async function Planta() {
   const p = await pacienteAtual();
   const [alas, missoes] = await Promise.all([listarAlas(), listarMissoesPublicadas()]);
   const porAla = (nome: string) => missoes.filter((m) => m.local === nome).length;
+  // Vínculo 10: a ala sem registro aparece inteira na planta, mesmo antes do nível exigido (o acesso continua pelo nível).
+  const ve = revelaAlaZero(p.atributos);
   return (
     <PlantaAlas
       nivel={p.nivel}
@@ -22,9 +25,9 @@ async function Planta() {
       visitadasIds={alas.filter((a) => p.alasVisitadas.includes(a.nome)).map((a) => a.id)}
       alas={alas.map((a) => ({
         id: a.id,
-        nome: a.secreta ? nomeSecreto(a.nome, p.nivel) : a.nome,
+        nome: a.secreta && !ve ? nomeSecreto(a.nome, p.nivel) : a.nome,
         sub: a.sub,
-        nivel: a.secreta && !alaAcessivel(a, p.nivel) ? 0 : a.nivel,
+        nivel: a.secreta && !ve && !alaAcessivel(a, p.nivel) ? 0 : a.nivel,
         interditada: a.situacao === "interditada",
         secreta: !!a.secreta,
         ocorrencias: a.secreta && !alaAcessivel(a, p.nivel) ? ["Registro inexistente."] : a.ocorrencias,

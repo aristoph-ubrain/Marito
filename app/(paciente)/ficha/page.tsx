@@ -6,6 +6,7 @@ import { FotoFicha } from "./SeletorFoto";
 import { RelatoEditavel } from "./RelatoEditavel";
 import { ATRIBUTOS } from "@/lib/atributos";
 import { pacienteAtual } from "@/lib/dal";
+import { revelaTarjas } from "@/lib/habilidades";
 import { dataCurta, dois, milhar, xpParaProximoNivel } from "@/lib/regras";
 
 const SEXO = { M: "M", F: "F", O: "Outro" } as const;
@@ -15,6 +16,7 @@ async function Ficha() {
   const total = xpParaProximoNivel(p.nivel);
   const agora = new Date(); // a página já é dinâmica (lê a sessão)
   const amanha = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
+  const semTarja = revelaTarjas(p.atributos); // Vínculo 15
   const anotacoes = [...p.anotacoes].sort((a, b) => new Date(a.em).getTime() - new Date(b.em).getTime());
 
   return (
@@ -80,11 +82,11 @@ async function Ficha() {
           </div>
         ))}
         <div className="border-t border-dashed border-tinta pt-2 text-[13px] leading-snug opacity-70">
-          <b>{dataCurta(amanha)} · ██████</b>
+          <b>{dataCurta(amanha)} · {semTarja ? "Diretoria" : "██████"}</b>
           <br />
-          Paciente transferido para Ala ██.
+          {semTarja ? "Paciente transferido para a Ala Zero. Leito já preparado. Família não será informada." : "Paciente transferido para Ala ██."}
         </div>
-        <Anotacao>Essa última anotação é de amanhã.</Anotacao>
+        <Anotacao>{semTarja ? "agora eu consigo ler o que estava riscado. preferia não conseguir." : "Essa última anotação é de amanhã."}</Anotacao>
       </section>
 
       <Rodape>Documento de uso interno. O paciente não deve ter acesso a este prontuário.</Rodape>

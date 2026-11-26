@@ -13,6 +13,7 @@ export type Registro = {
   codigo: string;
   texto: string;
   xp?: number;
+  vezes?: number; // conclusões repetidas agrupadas num só lançamento
 };
 
 export type NovoRegistro = Omit<Registro, "prontuario">;

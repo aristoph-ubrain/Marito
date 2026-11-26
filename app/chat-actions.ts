@@ -4,6 +4,7 @@ import { limparTexto, listarMensagens, LIMITE_MENSAGEM, INTERVALO_ENVIO_S, publi
 import { coordenadorDaSessao, prontuarioDaSessao } from "@/lib/dal";
 import { consumir } from "@/lib/limite";
 import { buscarPaciente } from "@/lib/pacientes";
+import { revela0112 } from "@/lib/habilidades";
 
 type Resposta = { ok: true } | { ok: false; erro: string };
 
@@ -18,7 +19,8 @@ function validar(texto: unknown): string | { erro: string } {
 export async function buscarMensagens(depois: number): Promise<MensagemVista[]> {
   const eu = await prontuarioDaSessao();
   if (!eu && !(await coordenadorDaSessao())) return [];
-  return listarMensagens(eu ?? undefined, typeof depois === "number" ? depois : undefined);
+  const p = eu ? await buscarPaciente(eu) : null;
+  return listarMensagens(eu ?? undefined, typeof depois === "number" ? depois : undefined, !!p && revela0112(p.atributos));
 }
 
 export async function enviarMensagem(texto: string): Promise<Resposta> {

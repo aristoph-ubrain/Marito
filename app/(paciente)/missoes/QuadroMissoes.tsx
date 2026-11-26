@@ -5,7 +5,8 @@ import { useEffect, useState, useTransition } from "react";
 import { Anotacao, BarraXp, Rodape, Titulo } from "@/components/ui";
 import type { Missao } from "@/lib/atributos";
 import { dois, duracaoTexto, milhar, mmss, PONTOS_POR_NIVEL, xpParaProximoNivel } from "@/lib/regras";
-import { iniciarMissao, interromperMissao, sincronizar } from "../actions";
+import { duracaoComHabilidade, resumoHabilidades, TAMANHO_FILA, xpComHabilidade, type Valores } from "@/lib/habilidades";
+import { enfileirarMissao, iniciarMissao, interromperMissao, removerDaFila, sincronizar } from "../actions";
 
 type Filtro = "todas" | "liberadas" | "bloqueadas" | "andamento";
 const FILTROS: [Filtro, string][] = [
@@ -26,6 +27,10 @@ export function QuadroMissoes({
   feitasHoje,
   concluidas,
   alasFechadas,
+  atributos,
+  filaAtiva,
+  repetirAtivo,
+  fila,
   emCurso,
 }: {
   prontuario: string;
@@ -36,6 +41,10 @@ export function QuadroMissoes({
   feitasHoje: number;
   concluidas: Record<string, number>;
   alasFechadas: string[];
+  atributos: Valores;
+  filaAtiva: boolean;
+  repetirAtivo: boolean;
+  fila: { codigo: string; titulo: string }[];
   emCurso: EmCurso | null;
 }) {
   const router = useRouter();
@@ -107,6 +116,8 @@ export function QuadroMissoes({
 
   const progresso = emCurso && prog.codigo === `${emCurso.codigo}@${emCurso.inicio}` ? prog.p : 0;
   const bloqueadoGeral = emCurso !== null || ocupado;
+  const podeEnfileirar = filaAtiva && emCurso !== null && fila.length < TAMANHO_FILA;
+  const hab = resumoHabilidades(atributos);
   const total = xpParaProximoNivel(nivel);
 
   const lista = missoes
@@ -125,7 +136,7 @@ export function QuadroMissoes({
         <Titulo>IV. ORDENS DE ATIVIDADE</Titulo>
         <p className="m-0 text-xs leading-snug opacity-85">
           Atividades internas liberadas conforme o nível do paciente e o acesso à ala. Uma atividade por vez, sem limite diário.
-          A atividade continua mesmo com o sistema fechado.
+          A atividade continua mesmo com o sistema fechado. Duração e recompensa já contam as suas habilidades.
         </p>
         <div className="relative flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
           {aviso && !aviso.nivel && (
@@ -144,7 +155,24 @@ export function QuadroMissoes({
             <span>MISSÕES HOJE: <b>{feitasHoje}</b></span>
             <span>Reinicia à meia-noite</span>
           </div>
+          <div className="flex flex-wrap justify-between gap-x-3 border-t border-dashed border-tinta pt-1.5 text-xs">
+            <span>Habilidades: <b>{hab.duracao}</b> duração · <b>{hab.xp.split(" ")[0]}</b> XP</span>
+            <span>Repetir: <b>{repetirAtivo ? "LIGADO" : "DESLIGADO"}</b></span>
+          </div>
         </div>
+        {filaAtiva && (
+          <div className="flex flex-col gap-1.5 border-[1.5px] border-dashed border-tinta px-3 py-2 text-xs">
+            <b className="tracking-[.5px]">FILA DE ORDENS ({fila.length}/{TAMANHO_FILA})</b>
+            {fila.length === 0 && <span className="opacity-75">Vazia. Com uma atividade em andamento, use PÔR NA FILA.</span>}
+            {fila.map((f, i) => (
+              <div key={`${f.codigo}-${i}`} className="flex items-center gap-2 border-t border-dashed border-tinta/50 pt-1.5">
+                <span className="flex-1">{i + 1}. {f.codigo} · {f.titulo}</span>
+                <button type="button" className="btn min-h-8 px-2 text-[11px]" disabled={ocupado} onClick={() => executar(() => removerDaFila(i))}
+                  aria-label={`Tirar ${f.codigo} da fila`}>TIRAR</button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar missões">
@@ -185,8 +213,8 @@ export function QuadroMissoes({
                 {alaFechada && <span className="border-[1.5px] border-dashed border-carimbo px-1.5 py-0.5 text-xs text-carimbo">ALA SEM ACESSO</span>}
               </div>
               <div className="flex justify-between border-t border-dashed border-tinta pt-1.5 text-[13px]">
-                <span><b>Recompensa:</b> {m.xp == null ? "+??? XP" : `+${m.xp} XP`}</span>
-                <span>Duração {duracaoTexto(m.duracao)}</span>
+                <span><b>Recompensa:</b> {m.xp == null ? "+??? XP" : `+${xpComHabilidade(m.xp, m.duracao, atributos)} XP`}</span>
+                <span>Duração {duracaoTexto(duracaoComHabilidade(m.duracao, atributos))}</span>
               </div>
 
               {rodando && emCurso && (
@@ -207,10 +235,17 @@ export function QuadroMissoes({
                   <span className="text-[11px] opacity-75">
                     {concluidas[m.codigo] ? `Concluída ${concluidas[m.codigo]}×` : "Nunca realizada"}
                   </span>
-                  <button type="button" className="btn btn-pri px-4 text-sm tracking-[1px]" disabled={bloqueadoGeral}
-                    onClick={() => executar(() => iniciarMissao(m.codigo))}>
-                    INICIAR
-                  </button>
+                  {podeEnfileirar ? (
+                    <button type="button" className="btn px-3 text-sm tracking-[1px]" disabled={ocupado}
+                      onClick={() => executar(() => enfileirarMissao(m.codigo))}>
+                      PÔR NA FILA
+                    </button>
+                  ) : (
+                    <button type="button" className="btn btn-pri px-4 text-sm tracking-[1px]" disabled={bloqueadoGeral}
+                      onClick={() => executar(() => iniciarMissao(m.codigo))}>
+                      INICIAR
+                    </button>
+                  )}
                 </div>
               )}
               {!ok && (

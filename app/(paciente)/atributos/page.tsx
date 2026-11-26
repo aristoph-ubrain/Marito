@@ -38,7 +38,7 @@ async function Avaliacao() {
         <div className="text-xs opacity-80">XP total registrada: {milhar(p.xpTotal)}</div>
       </section>
 
-      <DistribuirPontos atributos={p.atributos} pontos={p.pontos} />
+      <DistribuirPontos atributos={p.atributos} pontos={p.pontos} automacoes={p.automacoes} />
     </>
   );
 }

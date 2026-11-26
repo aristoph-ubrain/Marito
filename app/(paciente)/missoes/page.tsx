@@ -4,6 +4,7 @@ import { alaAcessivel, listarAlas } from "@/lib/alas";
 import { pacienteAtual } from "@/lib/dal";
 import { listarMissoesPublicadas } from "@/lib/ordens";
 import { diaBrasilia } from "@/lib/regras";
+import { automacaoLiberada } from "@/lib/habilidades";
 import { QuadroMissoes } from "./QuadroMissoes";
 
 async function Quadro() {
@@ -23,6 +24,10 @@ async function Quadro() {
       feitasHoje={p.missoesHoje.dia === hoje ? p.missoesHoje.n : 0}
       concluidas={p.concluidas}
       alasFechadas={alasFechadas}
+      atributos={p.atributos}
+      filaAtiva={!!p.automacoes.fila && automacaoLiberada("fila", p.atributos)}
+      repetirAtivo={!!p.automacoes.repetir && automacaoLiberada("repetir", p.atributos)}
+      fila={p.fila.map((f) => ({ codigo: f.codigo, titulo: f.titulo }))}
       emCurso={p.emCurso ? { codigo: p.emCurso.codigo, inicio: new Date(p.emCurso.inicio).getTime(), duracao: p.emCurso.duracao } : null}
     />
   );
