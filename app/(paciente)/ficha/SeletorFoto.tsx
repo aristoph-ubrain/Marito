@@ -39,7 +39,7 @@ export function FotoFicha({ atual, prontuario, children }: { atual: OpcaoFoto | 
             aria-expanded={mostrarSeletor}
             className="flex cursor-pointer flex-col items-center gap-2.5 border-0 bg-transparent p-0 font-mono text-tinta"
           >
-            <FotoProntuario opcao={atual} prontuario={prontuario} prefixo="ficha" />
+            <span key={atual} className="anim-revela"><FotoProntuario opcao={atual} prontuario={prontuario} prefixo="ficha" /></span>
             <span className="text-[10px] tracking-[.5px] opacity-70">toque para trocar</span>
           </button>
         ) : (

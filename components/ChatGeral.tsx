@@ -80,9 +80,9 @@ export function ChatGeral({
           {msgs.length === 0 && <p className="m-0 text-xs leading-[26px] opacity-60">— Nenhuma mensagem nas últimas 24 horas.</p>}
           {msgs.map((m) =>
             m.tipo === "sistema" ? (
-              <p key={m.id} className="m-0 text-xs leading-[26px] italic opacity-70">— {m.texto}</p>
+              <p key={m.id} className="anim-entra m-0 text-xs leading-[26px] italic opacity-70">— {m.texto}</p>
             ) : (
-              <p key={m.id} className="m-0 text-sm leading-[26px]" style={{ color: m.minha ? "var(--color-caneta)" : COR[m.tipo] }}>
+              <p key={m.id} className="anim-entra m-0 text-sm leading-[26px]" style={{ color: m.minha ? "var(--color-caneta)" : COR[m.tipo] }}>
                 <span className="text-[11px] opacity-60">{m.hora} </span>
                 <b>{m.autor}:</b> {m.texto}
               </p>

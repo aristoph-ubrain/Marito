@@ -28,7 +28,7 @@ export function Selo({ tamanho = 44 }: { tamanho?: number }) {
 }
 
 export function Titulo({ children }: { children: ReactNode }) {
-  return <h2 className="m-0 font-maquina text-lg font-normal">{children}</h2>;
+  return <h2 className="anim-datilo m-0 font-maquina text-lg font-normal">{children}</h2>;
 }
 
 export function Carimbo({
@@ -45,8 +45,8 @@ export function Carimbo({
   const c = cor === "verde" ? "var(--color-verde)" : "var(--color-carimbo)";
   return (
     <span
-      className="inline-block self-start whitespace-nowrap px-2.5 py-1 font-maquina tracking-[2px] opacity-90"
-      style={{ border: `2.5px solid ${c}`, color: c, transform: `rotate(${giro}deg)`, fontSize: tamanho }}
+      className="anim-carimbo inline-block self-start whitespace-nowrap px-2.5 py-1 font-maquina tracking-[2px] opacity-90"
+      style={{ border: `2.5px solid ${c}`, color: c, transform: `rotate(${giro}deg)`, fontSize: tamanho, ["--giro" as string]: `${giro}deg` }}
     >
       {children}
     </span>
@@ -56,7 +56,7 @@ export function Carimbo({
 /** Anotação à caneta azul. */
 export function Anotacao({ children, style }: { children: ReactNode; style?: CSSProperties }) {
   return (
-    <p className="m-0 font-mao text-[19px] text-caneta" style={{ transform: "rotate(-1.5deg)", ...style }}>
+    <p className="anim-tremor m-0 font-mao text-[19px] text-caneta" style={{ transform: "rotate(-1.5deg)", ...style }}>
       {children}
     </p>
   );
@@ -92,7 +92,7 @@ export function BarraXp({ atual, total }: { atual: number; total: number }) {
       aria-label="Experiência no nível"
     >
       <div
-        className="h-full"
+        className="anim-barra h-full"
         style={{ width: `${pct}%`, background: "repeating-linear-gradient(90deg,#2b2620 0 6px,transparent 6px 8px)" }}
       />
     </div>

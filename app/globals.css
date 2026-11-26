@@ -143,3 +143,93 @@ body {
     height: 3px;
   }
 }
+
+/* ================================================================
+ * Animações (ver docs/prompt-animacoes.md). Discretas: 150–400 ms.
+ * Com "reduzir movimento", só ficam as de feedback (fim do arquivo).
+ * ================================================================ */
+@keyframes anim-entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes anim-carimbo {
+  0% { opacity: 0; transform: scale(1.6) rotate(var(--giro, -4deg)); }
+  60% { opacity: 1; transform: scale(0.94) rotate(var(--giro, -4deg)); }
+  100% { opacity: 1; transform: scale(1) rotate(var(--giro, -4deg)); }
+}
+@keyframes anim-datilo { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes anim-sobe { 0% { opacity: 0; transform: translateY(4px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-22px); } }
+@keyframes anim-sacode { 0%, 100% { transform: none; } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+@keyframes anim-revela { from { filter: sepia(1) blur(3px) brightness(1.3); opacity: 0.4; } to { filter: none; opacity: 1; } }
+@keyframes anim-risco { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes anim-risco-diag { from { transform: rotate(-24deg) scaleX(0); } to { transform: rotate(-24deg) scaleX(1); } }
+@keyframes anim-desdobra { from { opacity: 0; transform: perspective(600px) rotateX(-35deg) scaleY(0.9); } to { opacity: 1; transform: none; } }
+@keyframes anim-rasga-esq { to { opacity: 0; transform: translate(-18px, 10px) rotate(-8deg); } }
+@keyframes anim-rasga-dir { to { opacity: 0; transform: translate(18px, 14px) rotate(9deg); } }
+/* Terror sutil: quase o ciclo todo parado, um instante alterado. */
+@keyframes anim-censura { 0%, 95%, 100% { opacity: 1; } 96% { opacity: 0.55; } 97% { opacity: 1; } 98% { opacity: 0.7; } }
+@keyframes anim-tremor { 0%, 96%, 100% { transform: rotate(-1.5deg); } 97% { transform: rotate(-1.5deg) translate(1px, -1px); } 98% { transform: rotate(-1.5deg) translate(-1px, 1px); } }
+@keyframes anim-luz { 0%, 97.6%, 100% { opacity: 0; } 97.8% { opacity: 0.12; } 98.1% { opacity: 0; } 98.4% { opacity: 0.08; } }
+
+@layer components {
+  /* Transição de tela (template.tsx) e blocos em sequência */
+  .anim-tela { animation: anim-entra 280ms ease-out both; }
+  .anim-cascata > * { animation: anim-entra 260ms ease-out both; }
+  .anim-cascata > *:nth-child(2) { animation-delay: 40ms; }
+  .anim-cascata > *:nth-child(3) { animation-delay: 80ms; }
+  .anim-cascata > *:nth-child(4) { animation-delay: 120ms; }
+  .anim-cascata > *:nth-child(5) { animation-delay: 160ms; }
+  .anim-cascata > *:nth-child(6) { animation-delay: 200ms; }
+  .anim-cascata > *:nth-child(n + 7) { animation-delay: 240ms; }
+
+  /* Papel e máquina de escrever */
+  .anim-carimbo { animation: anim-carimbo 260ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }
+  .anim-datilo { animation: anim-datilo 420ms steps(18, end) both; }
+  .anim-revela { animation: anim-revela 520ms ease-out both; }
+  .anim-desdobra { transform-origin: top center; animation: anim-desdobra 320ms ease-out backwards; } /* backwards: depois volta o transform próprio (giro do papel) */
+  .anim-entra { animation: anim-entra 220ms ease-out both; }
+  .contagem i.novo { transform-origin: bottom center; animation: anim-risco 180ms ease-out both; }
+  .contagem.cheio-novo::after { transform-origin: left center; animation: anim-risco-diag 200ms ease-out 120ms both; }
+
+  /* Rasgar: as duas metades se afastam */
+  .anim-rasga { position: relative; }
+  .anim-rasga > * { visibility: hidden; }
+  .anim-rasga::before,
+  .anim-rasga::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    box-shadow: inherit;
+  }
+  .anim-rasga::before { clip-path: polygon(0 0, 52% 0, 46% 22%, 54% 44%, 45% 66%, 53% 84%, 48% 100%, 0 100%); animation: anim-rasga-esq 360ms ease-in forwards; }
+  .anim-rasga::after { clip-path: polygon(52% 0, 100% 0, 100% 100%, 48% 100%, 53% 84%, 45% 66%, 54% 44%, 46% 22%); animation: anim-rasga-dir 360ms ease-in forwards; }
+
+  /* Feedback de jogo */
+  .anim-barra { transition: width 600ms cubic-bezier(0.3, 0.7, 0.3, 1); }
+  .anim-ganho { animation: anim-sobe 1100ms ease-out both; pointer-events: none; }
+  .anim-erro { animation: anim-sacode 320ms ease-in-out; }
+
+  /* Terror sutil */
+  .censura { animation: anim-censura 9.7s linear infinite; }
+  .anim-tremor { animation: anim-tremor 12.3s linear infinite; }
+  .papel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: #0b0a08;
+    opacity: 0;
+    animation: anim-luz 47s linear infinite;
+    animation-delay: 13s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sem transições de tela, cascatas, carimbos, datilografia, papel, tremores e piscadas. */
+  .anim-tela, .anim-cascata > *, .anim-carimbo, .anim-datilo, .anim-revela, .anim-desdobra, .anim-entra,
+  .contagem i.novo, .contagem.cheio-novo::after, .censura, .anim-tremor, .papel::after,
+  .anim-rasga::before, .anim-rasga::after {
+    animation: none !important;
+  }
+  .anim-rasga > * { visibility: visible; }
+  .anim-rasga::before, .anim-rasga::after { content: none; }
+  /* Feedback (.anim-barra, .anim-ganho, .anim-erro e o carimbo de nível) continua. */
+}

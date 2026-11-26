@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Anotacao, BarraXp, Rodape, Titulo } from "@/components/ui";
 import type { Missao } from "@/lib/atributos";
-import { dois, duracaoTexto, milhar, mmss, xpParaProximoNivel } from "@/lib/regras";
+import { dois, duracaoTexto, milhar, mmss, PONTOS_POR_NIVEL, xpParaProximoNivel } from "@/lib/regras";
 import { iniciarMissao, interromperMissao, sincronizar } from "../actions";
 
 type Filtro = "todas" | "liberadas" | "bloqueadas" | "andamento";
@@ -43,6 +43,15 @@ export function QuadroMissoes({
   const [prog, setProg] = useState({ codigo: "", p: 0 });
   const [erro, setErro] = useState("");
   const [ocupado, iniciar] = useTransition();
+
+  // Feedback de XP e nível: compara com os valores da renderização anterior (padrão "estado anterior" do React).
+  const [anterior, setAnterior] = useState({ nivel, xp });
+  const [aviso, setAviso] = useState<{ chave: string; texto: string; nivel: boolean } | null>(null);
+  if (anterior.nivel !== nivel || anterior.xp !== xp) {
+    setAnterior({ nivel, xp });
+    if (nivel > anterior.nivel) setAviso({ chave: `n${nivel}`, texto: `NÍVEL ${dois(nivel)} · +${PONTOS_POR_NIVEL * (nivel - anterior.nivel)} PONTOS`, nivel: true });
+    else if (xp > anterior.xp) setAviso({ chave: `x${nivel}-${xp}`, texto: `+${milhar(xp - anterior.xp)} XP`, nivel: false });
+  }
 
   // Diferença entre o relógio do aparelho e o do servidor (corrige celulares com hora errada).
   const [desvio] = useState(() => agoraServidor - Date.now());
@@ -118,12 +127,19 @@ export function QuadroMissoes({
           Atividades internas liberadas conforme o nível do paciente e o acesso à ala. Uma atividade por vez, sem limite diário.
           A atividade continua mesmo com o sistema fechado.
         </p>
-        <div className="flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
+        <div className="relative flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
+          {aviso && !aviso.nivel && (
+            <span key={aviso.chave} role="status" className="anim-ganho absolute -top-3 right-3 bg-papel px-1 font-maquina text-base text-verde">{aviso.texto}</span>
+          )}
           <div className="flex justify-between text-[13px]">
             <span><b>Pront. {prontuario}</b> · Nv. {dois(nivel)}</span>
             <span>{milhar(xp)} / {milhar(total)} XP</span>
           </div>
           <BarraXp atual={xp} total={total} />
+          {aviso?.nivel && (
+            <span key={aviso.chave} role="status" className="anim-carimbo self-start border-[2.5px] border-verde px-2 py-0.5 font-maquina text-sm tracking-[2px] text-verde"
+              style={{ transform: "rotate(-3deg)", ["--giro" as string]: "-3deg" }}>{aviso.texto}</span>
+          )}
           <div className="flex justify-between border-t border-dashed border-tinta pt-1.5 text-xs">
             <span>MISSÕES HOJE: <b>{feitasHoje}</b></span>
             <span>Reinicia à meia-noite</span>
@@ -144,7 +160,7 @@ export function QuadroMissoes({
 
       <Anotacao>Ninguém autorizou a OS-019. Ela continua aparecendo.</Anotacao>
 
-      <div className="flex flex-col gap-3.5">
+      <div className="anim-cascata flex flex-col gap-3.5" key={filtro}>
         {lista.length === 0 && <p className="m-0 text-xs opacity-70">Nenhuma ordem nesta situação.</p>}
         {lista.map(({ m, ok, alaFechada, rodando }) => {
           const cor = ok ? "var(--color-verde)" : "var(--color-carimbo)";
@@ -156,8 +172,8 @@ export function QuadroMissoes({
               </div>
               <div className="flex items-start gap-2">
                 <h3 className="m-0 flex-1 font-maquina text-[17px] font-normal leading-tight">{m.titulo}</h3>
-                <span className="whitespace-nowrap px-1.5 py-0.5 font-maquina text-[11px] tracking-[1px]"
-                  style={{ border: `2px solid ${cor}`, color: cor, transform: "rotate(-5deg)" }}>
+                <span className="anim-carimbo whitespace-nowrap px-1.5 py-0.5 font-maquina text-[11px] tracking-[1px]"
+                  style={{ border: `2px solid ${cor}`, color: cor, transform: "rotate(-5deg)", ["--giro" as string]: "-5deg" }}>
                   {ok ? "LIBERADA" : "ACESSO NEGADO"}
                 </span>
               </div>
@@ -176,7 +192,7 @@ export function QuadroMissoes({
               {rodando && emCurso && (
                 <div className="flex flex-col gap-1.5">
                   <div className="h-4 border-[1.5px] border-verde p-0.5">
-                    <div className="h-full bg-verde" style={{ width: `${Math.round(progresso * 100)}%` }} />
+                    <div className="h-full bg-verde transition-[width] duration-200 ease-linear" style={{ width: `${Math.round(progresso * 100)}%` }} />
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span>{progresso >= 1 ? "CONCLUINDO…" : `EM ANDAMENTO · restam ${mmss((1 - progresso) * emCurso.duracao)}`}</span>

@@ -14,10 +14,10 @@ type Aba = "rec" | "esc" | "env";
 type Amigo = { prontuario: string; nome: string; ala: string };
 
 /** Papel pautado com a ponta dobrada. */
-function Papel({ fantasma, giro, children }: { fantasma?: boolean; giro: number; children: React.ReactNode }) {
+function Papel({ fantasma, giro, rasgando, children }: { fantasma?: boolean; giro: number; rasgando?: boolean; children: React.ReactNode }) {
   return (
     <article
-      className={`relative flex flex-col gap-2 px-3.5 pt-3 pb-3.5 shadow-[0_2px_6px_rgba(0,0,0,.28)] ${fantasma ? "bg-[#ece3cd] grayscale-[.35]" : "bg-[#f8f2e2]"}`}
+      className={`relative flex flex-col gap-2 px-3.5 pt-3 pb-3.5 shadow-[0_2px_6px_rgba(0,0,0,.28)] ${rasgando ? "anim-rasga" : "anim-desdobra"} ${fantasma ? "bg-[#ece3cd] grayscale-[.35]" : "bg-[#f8f2e2]"}`}
       style={{
         transform: `rotate(${giro}deg)`,
         backgroundImage: "repeating-linear-gradient(180deg,transparent 0 25px,rgba(44,74,138,.16) 25px 26px)",
@@ -37,6 +37,7 @@ export function Bilhetes({ recebidos, enviados, amigos, restam }: { recebidos: B
   const [erro, setErro] = useState("");
   const [aviso, setAviso] = useState("");
   const [confirmando, setConfirmando] = useState<string | null>(null);
+  const [rasgando, setRasgando] = useState<string | null>(null);
   const [ocupado, iniciar] = useTransition();
 
   const novos = recebidos.filter((b) => !b.lido).length;
@@ -63,13 +64,16 @@ export function Bilhetes({ recebidos, enviados, amigos, restam }: { recebidos: B
       router.refresh();
     });
 
-  const rasgarBilhete = (id: string) =>
+  const rasgarBilhete = (id: string) => {
+    setRasgando(id);
     iniciar(async () => {
       const r = await rasgar(id);
       setConfirmando(null);
+      setRasgando(null);
       if (!r.ok) setErro(r.erro);
       router.refresh();
     });
+  };
 
   const acoes = (b: BilheteVisto, podeResponder: boolean) =>
     confirmando === b.id ? (
@@ -110,7 +114,7 @@ export function Bilhetes({ recebidos, enviados, amigos, restam }: { recebidos: B
         <div className="flex flex-col gap-4">
           {recebidos.length === 0 && <p className="m-0 text-xs opacity-70">Nenhum bilhete guardado.</p>}
           {recebidos.map((b, i) => (
-            <Papel key={b.id} fantasma={b.fantasma} giro={GIROS[i % GIROS.length]}>
+            <Papel key={b.id} fantasma={b.fantasma} giro={GIROS[i % GIROS.length]} rasgando={rasgando === b.id}>
               <div className="flex justify-between gap-2 text-[11px]">
                 <b>{b.fantasma ? "De: ██████████" : `De: Pront. ${b.outro} · ${b.nome}`}</b>
                 <span>{quando(b)}</span>
@@ -171,7 +175,7 @@ export function Bilhetes({ recebidos, enviados, amigos, restam }: { recebidos: B
         <div className="flex flex-col gap-3.5">
           {enviados.length === 0 && <p className="m-0 text-xs opacity-70">Nenhum bilhete enviado.</p>}
           {enviados.map((b, i) => (
-            <Papel key={b.id} giro={GIROS[(i + 1) % GIROS.length]}>
+            <Papel key={b.id} giro={GIROS[(i + 1) % GIROS.length]} rasgando={rasgando === b.id}>
               <div className="flex justify-between gap-2 text-[11px]">
                 <b>Para: Pront. {b.outro} · {b.nome}</b>
                 <span>{quando(b)}</span>

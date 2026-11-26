@@ -77,7 +77,7 @@ export function FormCadastro() {
         <span className="rotulo">INTERNAÇÃO REGISTRADA</span>
         <div className="flex flex-col gap-0.5">
           <span className="text-xs">Seu prontuário</span>
-          <span className="font-maquina text-[40px] leading-none">Nº {prontuario}</span>
+          <span className="anim-datilo font-maquina text-[40px] leading-none">Nº {prontuario}</span>
         </div>
         <p className="m-0 text-sm leading-normal"><b>Paciente:</b> {d.nome}<br /><b>Leito:</b> Dormitório · Leito {quarto}</p>
         <Carimbo>CLASSE: ANÔMALO</Carimbo>

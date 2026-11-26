@@ -67,7 +67,7 @@ export function LivroOcorrencias({ prontuario, resumo, dias }: { prontuario: str
                 <b className="whitespace-nowrap font-maquina text-base font-normal">{d.data}</b>
                 <div className="flex-1 border-t-[1.5px] border-tinta" />
               </div>
-              <ol className="m-0 ml-1.5 flex list-none flex-col border-l-2 border-tinta p-0">
+              <ol className="anim-cascata m-0 ml-1.5 flex list-none flex-col border-l-2 border-tinta p-0">
                 {d.registros.map((r, i) => (
                   <li key={i} className={`relative flex flex-col gap-1 pt-1 pb-3 pl-4 ${r.futuro ? "opacity-55" : ""}`}>
                     <span aria-hidden="true" className="absolute top-[7px] -left-1.5 h-2.5 w-2.5 rounded-full border-2 border-tinta bg-papel" />

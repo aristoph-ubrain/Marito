@@ -73,14 +73,14 @@ export function FormLogin({ prontuarioSalvo }: { prontuarioSalvo?: string }) {
         <input id="usuario" autoComplete="username" placeholder={pac ? "0000" : "nome.sobrenome"}
           inputMode={pac ? "numeric" : "text"} value={usuario}
           onChange={(e) => { setUsuario(pac ? e.target.value.replace(/\D/g, "").slice(0, 4) : e.target.value); setErro(""); }}
-          className={`campo text-lg tracking-[3px] ${erro ? "campo-erro" : ""}`} />
+          className={`campo text-lg tracking-[3px] ${erro ? "campo-erro anim-erro" : ""}`} />
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="senha" className="rotulo">SENHA</label>
         <div className="flex">
           <input id="senha" type={verSenha ? "text" : "password"} autoComplete="current-password" value={senha}
             onChange={(e) => { setSenha(e.target.value); setErro(""); }}
-            className={`campo min-w-0 flex-1 border-r-0 text-lg ${erro ? "campo-erro" : ""}`} />
+            className={`campo min-w-0 flex-1 border-r-0 text-lg ${erro ? "campo-erro anim-erro" : ""}`} />
           <button type="button" className="btn w-[60px] px-0 text-[11px]" aria-label={verSenha ? "Ocultar senha" : "Mostrar senha"}
             onClick={() => setVerSenha((v) => !v)}>{verSenha ? "OCULTAR" : "VER"}</button>
         </div>
@@ -91,7 +91,7 @@ export function FormLogin({ prontuarioSalvo }: { prontuarioSalvo?: string }) {
           <span>Lembrar meu nº de prontuário neste aparelho</span>
         </label>
       )}
-      {erro && <p role="alert" className="m-0 text-xs text-carimbo">{erro}</p>}
+      {erro && <p role="alert" className="anim-erro m-0 text-xs text-carimbo">{erro}</p>}
       <button type="submit" disabled={entrando} className="btn btn-pri min-h-[50px] text-[15px] tracking-[1.5px]">
         {entrando ? "VERIFICANDO…" : "ACESSAR SISTEMA"}
       </button>

@@ -64,7 +64,7 @@ export function PlantaAlas({
         style={{ minHeight: altura, background: ok ? "var(--color-papel-claro)" : HACHURA, color: ok ? undefined : "#6b5f4e", borderStyle: a.secreta ? "dashed" : undefined }}>
         <b className="text-xs">{rotulo}</b>
         <span>nv {a.secreta && !ok ? "??" : dois(a.nivel)}{ok ? " ✓" : ""}</span>
-        {aqui && <span className="bg-carimbo px-1 text-[#f4efe2]">VOCÊ ESTÁ AQUI</span>}
+        {aqui && <span key={id} className="anim-carimbo bg-carimbo px-1 text-[#f4efe2]">VOCÊ ESTÁ AQUI</span>}
       </button>
     );
   };
@@ -122,8 +122,8 @@ export function PlantaAlas({
                     <span className="font-maquina text-[17px]">{nome(a)}</span>
                     <span className="text-xs opacity-85">{a.sub}</span>
                   </div>
-                  <span className="whitespace-nowrap px-1.5 py-0.5 font-maquina text-[11px] tracking-[1px]"
-                    style={{ border: `2px solid ${cor}`, color: cor, transform: "rotate(-4deg)" }}>
+                  <span className="anim-carimbo whitespace-nowrap px-1.5 py-0.5 font-maquina text-[11px] tracking-[1px]"
+                    style={{ border: `2px solid ${cor}`, color: cor, transform: "rotate(-4deg)", ["--giro" as string]: "-4deg" }}>
                     {ok ? "LIBERADA" : a.secreta ? "NÃO CONSTA" : a.interditada ? "INTERDITADA" : "RESTRITA"}
                   </span>
                 </div>
@@ -133,7 +133,7 @@ export function PlantaAlas({
                 </div>
               </button>
               {aberto && (
-                <div className="flex flex-col gap-2 border-[3px] border-t-0 border-tinta bg-papel-campo p-3">
+                <div className="anim-desdobra flex flex-col gap-2 border-[3px] border-t-0 border-tinta bg-papel-campo p-3">
                   <span className="text-[11px] tracking-[.5px]">OCORRÊNCIAS RECENTES</span>
                   {(a.secreta && !ok ? ["Registro inexistente."] : a.ocorrencias).map((o) => (
                     <div key={o} className="text-xs leading-snug">— {o}</div>
