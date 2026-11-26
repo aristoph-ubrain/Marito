@@ -18,7 +18,6 @@ async function Quadro() {
       prontuario={p.prontuario}
       agoraServidor={agora.getTime()}
       missoes={missoes}
-      atributos={p.atributos}
       nivel={p.nivel}
       xp={p.xp}
       feitasHoje={p.missoesHoje.dia === hoje ? p.missoesHoje.n : 0}

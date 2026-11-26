@@ -1,3 +1,4 @@
+import { NIVEL_PADRAO_ALA } from "./alas";
 import type { ChaveAtributo, Missao } from "./atributos";
 import { banco } from "./db";
 
@@ -8,7 +9,10 @@ export type Ordem = {
   titulo: string;
   ala: string; // "CAPELA"
   descricao: string;
-  requisitos: { atributo: ChaveAtributo; minimo: number }[];
+  /** Nível mínimo do paciente, definido pela coordenação. Ordens antigas podem não ter. */
+  nivel?: number;
+  /** Requisitos de atributo do modelo antigo: não são mais usados. */
+  requisitos?: { atributo: ChaveAtributo; minimo: number }[];
   xp: number;
   duracao: number; // em segundos
   situacao: Situacao;
@@ -19,6 +23,9 @@ export type Ordem = {
   editadaEm?: Date;
 };
 
+/** Nível exigido pela ordem; sem o campo, vale o nível padrão da ala dela. */
+export const nivelDaOrdem = (o: Pick<Ordem, "nivel" | "ala">) => o.nivel ?? NIVEL_PADRAO_ALA[o.ala] ?? 1;
+
 async function colecao() {
   return (await banco()).collection<Ordem>("ordens");
 }
@@ -26,7 +33,8 @@ async function colecao() {
 /** Todas as ordens, para a coordenação. */
 export async function listarOrdens(): Promise<Ordem[]> {
   const c = await colecao();
-  return c.find({}, { projection: { _id: 0 } }).sort({ codigo: 1 }).toArray();
+  const ordens = await c.find({}, { projection: { _id: 0 } }).sort({ codigo: 1 }).toArray();
+  return ordens.map((o) => ({ ...o, nivel: nivelDaOrdem(o) }));
 }
 
 export async function buscarOrdem(codigo: string): Promise<Ordem | null> {
@@ -42,7 +50,7 @@ export async function listarMissoesPublicadas(): Promise<Missao[]> {
     titulo: o.titulo,
     local: o.ala,
     descricao: o.descricao,
-    requisitos: o.requisitos,
+    nivel: nivelDaOrdem(o),
     xp: o.xp,
     duracao: o.duracao,
   }));

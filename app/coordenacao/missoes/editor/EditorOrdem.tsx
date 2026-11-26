@@ -3,19 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ATRIBUTOS, siglaDe, type ChaveAtributo } from "@/lib/atributos";
 import { dois, duracaoTexto, DURACOES_MISSAO } from "@/lib/regras";
 import { salvarOrdem } from "../actions";
 
 const ALAS = ["TÉRREO", "ALA A", "ALA B", "CONSULTÓRIOS", "ALA C", "CAPELA"];
 
-type Req = { atributo: ChaveAtributo; minimo: number };
 export type OrdemInicial = {
   codigo: string;
   titulo: string;
   ala: string;
   descricao: string;
-  requisitos: Req[];
+  nivel: number;
   xp: number;
   duracao: number;
   publicada: boolean;
@@ -27,7 +25,7 @@ export function EditorOrdem({ inicial }: { inicial: OrdemInicial | null }) {
   const [titulo, setTitulo] = useState(inicial?.titulo ?? "");
   const [ala, setAla] = useState(inicial?.ala ?? ALAS[0]);
   const [descricao, setDescricao] = useState(inicial?.descricao ?? "");
-  const [reqs, setReqs] = useState<Req[]>(inicial?.requisitos ?? [{ atributo: "FOR", minimo: 1 }]);
+  const [nivel, setNivel] = useState(inicial?.nivel ?? 1);
   const [xp, setXp] = useState(inicial?.xp ?? 50);
   const [duracao, setDuracao] = useState(inicial?.duracao ?? 20);
   const [salvando, iniciar] = useTransition();
@@ -35,15 +33,10 @@ export function EditorOrdem({ inicial }: { inicial: OrdemInicial | null }) {
   const bloqueada = !!inicial?.protegida;
   const opcoesDuracao = [...new Set([...DURACOES_MISSAO, duracao])].sort((a, b) => a - b);
 
-  const mudarReq = (i: number, o: Partial<Req>) => {
-    setReqs((r) => r.map((x, j) => (j === i ? { ...x, ...o } : x)));
-    setMsg(null);
-  };
-
   const salvar = (publicar: boolean) => {
     setMsg(null);
     iniciar(async () => {
-      const r = await salvarOrdem({ titulo, ala, descricao, requisitos: reqs, xp, duracao }, publicar, inicial?.codigo);
+      const r = await salvarOrdem({ titulo, ala, descricao, nivel, xp, duracao }, publicar, inicial?.codigo);
       if (!r.ok) return setMsg({ texto: r.erro, ok: false });
       router.push("/coordenacao/missoes");
       router.refresh();
@@ -87,30 +80,15 @@ export function EditorOrdem({ inicial }: { inicial: OrdemInicial | null }) {
           <textarea id="descricao" className="campo" rows={3} maxLength={500} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
         </div>
 
-        <fieldset className="m-0 flex flex-col gap-2 border-[1.5px] border-tinta p-2.5">
-          <legend className="rotulo px-1">REQUISITOS DE ATRIBUTO</legend>
-          {reqs.map((r, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <select aria-label="Atributo" className="campo min-w-0 flex-1 px-1.5" value={r.atributo}
-                onChange={(e) => mudarReq(i, { atributo: e.target.value as ChaveAtributo })}>
-                {ATRIBUTOS.map((a) => <option key={a.chave} value={a.chave}>{a.sigla} · {a.nome}</option>)}
-              </select>
-              <button type="button" className="btn h-11 w-11 p-0 text-lg" aria-label="Diminuir" onClick={() => mudarReq(i, { minimo: Math.max(1, r.minimo - 1) })}>−</button>
-              <b className="min-w-[26px] text-center font-maquina text-lg">{dois(r.minimo)}</b>
-              <button type="button" className="btn h-11 w-11 p-0 text-lg" aria-label="Aumentar" onClick={() => mudarReq(i, { minimo: r.minimo + 1 })}>+</button>
-              <button type="button" className="btn h-11 w-11 border-dashed p-0" aria-label="Remover requisito"
-                onClick={() => setReqs((x) => x.filter((_, j) => j !== i))}>✕</button>
-            </div>
-          ))}
-          <button type="button" className="btn border-dashed" disabled={reqs.length >= 4}
-            onClick={() => {
-              const usados = reqs.map((r) => r.atributo);
-              const livre = ATRIBUTOS.find((a) => !usados.includes(a.chave))?.chave ?? "FOR";
-              setReqs((x) => [...x, { atributo: livre, minimo: 1 }]);
-            }}>
-            + ADICIONAR REQUISITO
-          </button>
-        </fieldset>
+        <div className="flex flex-col gap-1.5">
+          <span className="rotulo" id="nivel-rotulo">NÍVEL MÍNIMO DO PACIENTE</span>
+          <div className="flex items-center gap-1" role="group" aria-labelledby="nivel-rotulo">
+            <button type="button" className="btn h-11 w-11 p-0 text-lg" aria-label="Diminuir nível" onClick={() => setNivel((n) => Math.max(1, n - 1))}>−</button>
+            <b className="flex-1 text-center font-maquina text-lg" aria-live="polite">Nv. {dois(nivel)}</b>
+            <button type="button" className="btn h-11 w-11 p-0 text-lg" aria-label="Aumentar nível" onClick={() => setNivel((n) => Math.min(999, n + 1))}>+</button>
+          </div>
+          <span className="text-[11px] leading-snug opacity-70">O paciente também precisa ter acesso à ala da ordem.</span>
+        </div>
 
         <div className="grid grid-cols-2 gap-2.5">
           <div className="flex flex-col gap-1.5">
@@ -137,7 +115,7 @@ export function EditorOrdem({ inicial }: { inicial: OrdemInicial | null }) {
           <b className="font-maquina text-base font-normal">{titulo || "(sem título)"}</b>
           {descricao && <p className="m-0 text-xs leading-snug opacity-90">{descricao}</p>}
           <div className="flex flex-wrap gap-1.5">
-            {reqs.map((r, i) => <span key={i} className="border-[1.5px] border-tinta px-1.5 py-0.5 text-[11px]">{siglaDe(r.atributo)} {dois(r.minimo)}</span>)}
+            <span className="border-[1.5px] border-tinta px-1.5 py-0.5 text-[11px]">NÍVEL MÍNIMO {dois(nivel)}</span>
           </div>
           <div className="flex justify-between border-t border-dashed border-tinta pt-1 text-xs">
             <span><b>Recompensa:</b> +{xp} XP</span><span>Duração {duracaoTexto(duracao)}</span>
@@ -159,7 +137,7 @@ export function EditorOrdem({ inicial }: { inicial: OrdemInicial | null }) {
         </div>
       </div>
       <p className="m-0 text-[11px] leading-snug opacity-70">
-        Ordens publicadas ficam visíveis imediatamente para os pacientes com os requisitos atendidos.
+        Ordens publicadas ficam visíveis imediatamente; só pacientes com o nível mínimo e acesso à ala podem iniciá-las.
       </p>
     </>
   );

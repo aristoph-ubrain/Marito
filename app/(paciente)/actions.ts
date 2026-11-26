@@ -7,14 +7,14 @@ import { colecaoConvivio, idVinculo } from "@/lib/convivio";
 import { MongoServerError } from "mongodb";
 import { prontuarioDaSessao } from "@/lib/dal";
 import { calcularPendencias, ganharXp, mutarPaciente } from "@/lib/jogo";
-import { buscarOrdem } from "@/lib/ordens";
+import { buscarOrdem, nivelDaOrdem } from "@/lib/ordens";
 import { buscarPaciente } from "@/lib/pacientes";
 import { registrar } from "@/lib/historico";
 import { colecaoPacientes } from "@/lib/pacientes";
 import { ehOpcaoFoto } from "@/components/Figurinha";
 import { LIMITE_RELATO, validarRelato } from "@/lib/cadastro";
 import { enviarBilhete, LIMITE_BILHETE, rasgarBilhete } from "@/lib/bilhetes";
-import { atendeRequisitos, BONUS_PRIMEIRA_VISITA_ALA, diaBrasilia } from "@/lib/regras";
+import { BONUS_PRIMEIRA_VISITA_ALA, diaBrasilia, dois } from "@/lib/regras";
 
 export type Resposta = { ok: true; msg?: string } | { ok: false; erro: string };
 const SEM_SESSAO: Resposta = { ok: false, erro: "Sessão expirada. Entre novamente." };
@@ -95,7 +95,7 @@ export async function iniciarMissao(codigo: string): Promise<Resposta> {
     if (atual.emCurso) return { erro: "Já existe uma atividade em andamento." };
     if (!ala) return { erro: "Ala da ordem não encontrada. Procure a coordenação." };
     if (!alaAcessivel(ala, atual.nivel)) return { erro: `Acesso à ${ala.nome} não autorizado.` };
-    if (!atendeRequisitos(atual.atributos, ordem.requisitos)) return { erro: "Avaliação insuficiente para esta ordem." };
+    if (atual.nivel < nivelDaOrdem(ordem)) return { erro: `Nível insuficiente: esta ordem pede nível ${dois(nivelDaOrdem(ordem))}.` };
 
     return {
       set: {

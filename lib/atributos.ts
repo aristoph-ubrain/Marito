@@ -28,7 +28,7 @@ export type Missao = {
   titulo: string;
   local: string;
   descricao: string;
-  requisitos: { atributo: ChaveAtributo; minimo: number }[];
+  nivel: number; // nível mínimo do paciente
   xp: number | null;
   duracao: number; // segundos
 };

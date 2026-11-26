@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Carregando } from "@/components/Carregando";
 import { coordenadorAtual } from "@/lib/dal";
-import { buscarOrdem } from "@/lib/ordens";
+import { buscarOrdem, nivelDaOrdem } from "@/lib/ordens";
 import { EditorOrdem } from "./EditorOrdem";
 
 async function Editor({ searchParams }: { searchParams: Promise<{ codigo?: string | string[] }> }) {
@@ -18,7 +18,7 @@ async function Editor({ searchParams }: { searchParams: Promise<{ codigo?: strin
               titulo: ordem.titulo,
               ala: ordem.ala,
               descricao: ordem.descricao,
-              requisitos: ordem.requisitos,
+              nivel: nivelDaOrdem(ordem),
               xp: ordem.xp,
               duracao: ordem.duracao,
               publicada: ordem.situacao === "pub",

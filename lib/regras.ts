@@ -55,13 +55,6 @@ export function missaoConcluida(inicio: Date, duracaoSegundos: number, agora: Da
   return agora.getTime() - inicio.getTime() >= duracaoSegundos * 1000;
 }
 
-export function atendeRequisitos(
-  atributos: Record<string, number>,
-  requisitos: { atributo: string; minimo: number }[],
-): boolean {
-  return requisitos.every((r) => (atributos[r.atributo] ?? 0) >= r.minimo);
-}
-
 export const dois = (n: number) => String(n).padStart(2, "0");
 export const milhar = (n: number) => n.toLocaleString("pt-BR");
 /** Relógio de contagem: mm:ss, ou h:mm:ss a partir de 1 hora. */

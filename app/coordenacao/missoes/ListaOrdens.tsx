@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Titulo } from "@/components/ui";
-import { siglaDe } from "@/lib/atributos";
 import type { Ordem, Situacao } from "@/lib/ordens";
 import { dois, duracaoTexto } from "@/lib/regras";
 import { alternarSituacao } from "./actions";
@@ -61,7 +60,7 @@ export function ListaOrdens({ ordens }: { ordens: Ordem[] }) {
               </div>
               <h3 className="m-0 font-maquina text-base font-normal">{o.titulo}</h3>
               <div className="flex flex-wrap gap-1.5">
-                {o.requisitos.map((r) => <span key={r.atributo} className="border-[1.5px] border-tinta px-1.5 py-0.5 text-[11px]">{siglaDe(r.atributo)} {dois(r.minimo)}</span>)}
+                <span className="border-[1.5px] border-tinta px-1.5 py-0.5 text-[11px]">NÍVEL MÍNIMO {dois(o.nivel ?? 1)}</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span><b>+{o.xp} XP</b> · {duracaoTexto(o.duracao)}</span>

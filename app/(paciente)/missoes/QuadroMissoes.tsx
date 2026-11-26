@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { Anotacao, BarraXp, GradeAtributos, Rodape, Titulo } from "@/components/ui";
-import { ATRIBUTOS, siglaDe, type ChaveAtributo, type Missao } from "@/lib/atributos";
-import { atendeRequisitos, dois, duracaoTexto, milhar, mmss, xpParaProximoNivel } from "@/lib/regras";
+import { Anotacao, BarraXp, Rodape, Titulo } from "@/components/ui";
+import type { Missao } from "@/lib/atributos";
+import { dois, duracaoTexto, milhar, mmss, xpParaProximoNivel } from "@/lib/regras";
 import { iniciarMissao, interromperMissao, sincronizar } from "../actions";
 
 type Filtro = "todas" | "liberadas" | "bloqueadas" | "andamento";
@@ -21,7 +21,6 @@ export function QuadroMissoes({
   prontuario,
   agoraServidor,
   missoes,
-  atributos,
   nivel,
   xp,
   feitasHoje,
@@ -32,7 +31,6 @@ export function QuadroMissoes({
   prontuario: string;
   agoraServidor: number;
   missoes: Missao[];
-  atributos: Record<ChaveAtributo, number>;
   nivel: number;
   xp: number;
   feitasHoje: number;
@@ -105,7 +103,7 @@ export function QuadroMissoes({
   const lista = missoes
     .map((m) => {
       const alaFechada = alasFechadas.includes(m.local);
-      const ok = !alaFechada && atendeRequisitos(atributos, m.requisitos);
+      const ok = !alaFechada && nivel >= m.nivel;
       return { m, ok, alaFechada, rodando: emCurso?.codigo === m.codigo };
     })
     .filter(({ ok, rodando }) =>
@@ -117,7 +115,7 @@ export function QuadroMissoes({
       <section className="flex flex-col gap-2.5">
         <Titulo>IV. ORDENS DE ATIVIDADE</Titulo>
         <p className="m-0 text-xs leading-snug opacity-85">
-          Atividades internas liberadas conforme a avaliação de atributos do paciente. Uma atividade por vez, sem limite diário.
+          Atividades internas liberadas conforme o nível do paciente e o acesso à ala. Uma atividade por vez, sem limite diário.
           A atividade continua mesmo com o sistema fechado.
         </p>
         <div className="flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
@@ -130,7 +128,6 @@ export function QuadroMissoes({
             <span>MISSÕES HOJE: <b>{feitasHoje}</b></span>
             <span>Reinicia à meia-noite</span>
           </div>
-          <GradeAtributos itens={ATRIBUTOS.map((a) => ({ sigla: a.sigla, valor: atributos[a.chave] }))} />
         </div>
       </section>
 
@@ -165,20 +162,11 @@ export function QuadroMissoes({
                 </span>
               </div>
               {m.descricao && <p className="m-0 text-xs leading-snug opacity-90">{m.descricao}</p>}
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] tracking-[.5px]">REQUISITOS</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {m.requisitos.map((r) => {
-                    const tem = atributos[r.atributo] ?? 0;
-                    const atende = tem >= r.minimo;
-                    return (
-                      <span key={r.atributo}
-                        className={`border-[1.5px] px-1.5 py-0.5 text-xs ${atende ? "border-tinta" : "border-dashed border-carimbo text-carimbo"}`}>
-                        {siglaDe(r.atributo)} {dois(r.minimo)} {atende ? "✓" : `· você ${dois(tem)}`}
-                      </span>
-                    );
-                  })}
-                </div>
+              <div className="flex flex-wrap gap-1.5">
+                <span className={`border-[1.5px] px-1.5 py-0.5 text-xs ${nivel >= m.nivel ? "border-tinta" : "border-dashed border-carimbo text-carimbo"}`}>
+                  NÍVEL {dois(m.nivel)} {nivel >= m.nivel ? "✓" : `· você ${dois(nivel)}`}
+                </span>
+                {alaFechada && <span className="border-[1.5px] border-dashed border-carimbo px-1.5 py-0.5 text-xs text-carimbo">ALA SEM ACESSO</span>}
               </div>
               <div className="flex justify-between border-t border-dashed border-tinta pt-1.5 text-[13px]">
                 <span><b>Recompensa:</b> {m.xp == null ? "+??? XP" : `+${m.xp} XP`}</span>

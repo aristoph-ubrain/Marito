@@ -23,6 +23,8 @@ const PADRAO: Ala[] = [
 ];
 
 export const NOMES_ALAS = PADRAO.filter((a) => !a.secreta).map((a) => a.nome);
+/** Nível padrão de cada ala (usado como nível de ordens antigas que não têm o campo). */
+export const NIVEL_PADRAO_ALA: Record<string, number> = Object.fromEntries(PADRAO.map((a) => [a.nome, a.nivel]));
 
 async function colecao() {
   const col = (await banco()).collection<Ala>("alas");

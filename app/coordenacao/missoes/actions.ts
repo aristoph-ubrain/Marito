@@ -2,12 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { NOMES_ALAS } from "@/lib/alas";
-import { ehChave } from "@/lib/atributos";
 import { banco } from "@/lib/db";
 import { coordenadorDaSessao } from "@/lib/dal";
 import { proximoCodigo, type Ordem } from "@/lib/ordens";
 
-type DadosOrdem = Pick<Ordem, "titulo" | "ala" | "descricao" | "requisitos" | "xp" | "duracao">;
+type DadosOrdem = Pick<Ordem, "titulo" | "ala" | "descricao" | "nivel" | "xp" | "duracao">;
 type Resultado = { ok: true; codigo: string } | { ok: false; erro: string };
 
 function atualizarTelas() {
@@ -23,19 +22,14 @@ function validar(d: DadosOrdem): string | DadosOrdem {
   if (titulo.length > 80) return "Título muito longo (máx. 80).";
   if (!NOMES_ALAS.includes(d.ala)) return "Ala inválida.";
   const descricao = typeof d.descricao === "string" ? d.descricao.trim().slice(0, 500) : "";
-  if (!Array.isArray(d.requisitos) || !d.requisitos.length) return "Inclua ao menos um requisito.";
-  if (d.requisitos.length > 4) return "No máximo 4 requisitos.";
-  for (const r of d.requisitos) {
-    if (!ehChave(r?.atributo) || !Number.isInteger(r.minimo) || r.minimo < 1 || r.minimo > 999) return "Requisito inválido.";
-  }
-  if (new Set(d.requisitos.map((r) => r.atributo)).size !== d.requisitos.length) return "Há atributos repetidos nos requisitos.";
+  if (!Number.isInteger(d.nivel) || (d.nivel as number) < 1 || (d.nivel as number) > 999) return "Nível mínimo inválido.";
   if (!Number.isInteger(d.xp) || d.xp < 0 || d.xp > 100000) return "Recompensa de XP inválida.";
   if (!Number.isInteger(d.duracao) || d.duracao < 5 || d.duracao > 24 * 60 * 60) return "Duração inválida.";
   return {
     titulo,
     ala: d.ala,
     descricao,
-    requisitos: d.requisitos.map((r) => ({ atributo: r.atributo, minimo: r.minimo })),
+    nivel: d.nivel,
     xp: d.xp,
     duracao: d.duracao,
   };
@@ -56,7 +50,7 @@ export async function salvarOrdem(dados: DadosOrdem, publicar: boolean, codigo?:
     const atual = await col.findOne({ codigo });
     if (!atual) return { ok: false, erro: `${codigo}: ordem não encontrada.` };
     if (atual.protegida) return { ok: false, erro: `${codigo}: ordem protegida. Edição bloqueada.` };
-    await col.updateOne({ codigo }, { $set: { ...v, situacao: publicar ? "pub" : "ras", editadaEm: new Date() } });
+    await col.updateOne({ codigo }, { $set: { ...v, situacao: publicar ? "pub" : "ras", editadaEm: new Date() }, $unset: { requisitos: "" } });
     atualizarTelas();
     return { ok: true, codigo };
   }

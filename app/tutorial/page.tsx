@@ -63,15 +63,15 @@ export default function TutorialPage() {
             para distribuir. Cada nível novo dá mais {PONTOS_POR_NIVEL}. Não há teto.
           </p>
           <p className="m-0 text-xs opacity-85">{ATRIBUTOS.map((a) => a.sigla).join(" · ")}</p>
-          <p className="m-0">Antes de gastar, veja o que as ordens que você quer pedem.</p>
+          <p className="m-0">Os atributos registram a sua avaliação na ficha. Eles não liberam ordens de atividade.</p>
         </Passo>
 
         <Passo n={3} titulo="ORDENS DE ATIVIDADE" onde="MISSÕES">
           <p className="m-0">
-            Cada ordem pede atributos mínimos e acesso à ala onde acontece. Inicie uma por vez e espere o tempo dela; não há limite
+            Cada ordem pede um <b>nível mínimo</b>, definido pela coordenação, e acesso à ala onde acontece. Inicie uma por vez e espere o tempo dela; não há limite
             por dia. Pode fechar o sistema: ao voltar, a XP já estará no seu prontuário.
           </p>
-          <p className="m-0">Ordens em vermelho estão bloqueadas: falta atributo ou a ala ainda não foi liberada.</p>
+          <p className="m-0">Ordens em vermelho estão bloqueadas: falta nível ou a ala ainda não foi liberada.</p>
         </Passo>
 
         <Passo n={4} titulo="NÍVEIS">
