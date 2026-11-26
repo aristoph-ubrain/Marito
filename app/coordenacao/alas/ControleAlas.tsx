@@ -12,7 +12,7 @@ export type AlaConfig = { id: string; nome: string; sub: string; nivel: number; 
 type Config = { nivel: number; situacao: Situacao };
 
 const COLUNAS = { 2: "col-span-2", 3: "col-span-3", 4: "col-span-4", 6: "col-span-6" } as const;
-const HACHURA = "repeating-linear-gradient(45deg,#e2d7bd 0 5px,#efe6d0 5px 10px)";
+const HACHURA = "repeating-linear-gradient(45deg,#d8c69c 0 5px,#e6d6b0 5px 10px)";
 
 export function ControleAlas({ alas }: { alas: AlaConfig[] }) {
   const router = useRouter();
@@ -66,7 +66,7 @@ export function ControleAlas({ alas }: { alas: AlaConfig[] }) {
         </p>
       </section>
 
-      <section className="-mx-2 flex flex-col gap-2 border-2 border-tinta bg-[#f4ecd8] p-2.5" aria-label="Planta do hospital">
+      <section className="-mx-2 flex flex-col gap-2 border-2 border-tinta bg-[#e9dbb8] p-2.5" aria-label="Planta do hospital">
         <div className="flex justify-between text-[11px] tracking-[.5px]"><span>PLANTA · VISÃO DA COORDENAÇÃO</span><span>N ↑</span></div>
         <div className="grid grid-cols-6 gap-1">
           {PLANTA.filter((c) => !c.abaixo).map((c) => comodo(c.id, COLUNAS[c.colunas], Math.round(c.altura * 0.75)))}

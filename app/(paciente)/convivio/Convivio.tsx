@@ -101,7 +101,7 @@ export function Convivio({
           {msg && <p role="status" className={`m-0 text-xs ${msg.ok ? "text-verde" : "text-carimbo"}`}>{msg.texto}</p>}
           <span className="text-[11px] opacity-70">Seu prontuário: {meuProntuario}</span>
         </form>
-        <Link href="/convivio/bilhetes" className="flex min-h-12 items-center justify-between gap-2.5 border-[1.5px] border-tinta bg-[#f8f2e2] px-3 text-[13px] text-tinta no-underline">
+        <Link href="/convivio/bilhetes" className="flex min-h-12 items-center justify-between gap-2.5 border-[1.5px] border-tinta bg-[#efe1bd] px-3 text-[13px] text-tinta no-underline">
           <span>
             ✉ BILHETES
             {bilhetesNaoLidos > 0 && (

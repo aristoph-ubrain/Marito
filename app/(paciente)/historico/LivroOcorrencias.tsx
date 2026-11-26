@@ -20,7 +20,7 @@ const ETIQUETA: Record<TipoRegistro, { rotulo: string; cor: string }> = {
   fa: { rotulo: "████████", cor: "var(--color-tinta)" },
 };
 const RASGO =
-  "linear-gradient(135deg,#efe6d0 50%,transparent 50%) 0 0/14px 14px repeat-x,linear-gradient(225deg,#efe6d0 50%,transparent 50%) 0 0/14px 14px repeat-x,#2a211a";
+  "linear-gradient(135deg,#e6d6b0 50%,transparent 50%) 0 0/14px 14px repeat-x,linear-gradient(225deg,#e6d6b0 50%,transparent 50%) 0 0/14px 14px repeat-x,#2a211a";
 
 export function LivroOcorrencias({ prontuario, resumo, dias }: { prontuario: string; resumo: [string, string][]; dias: DiaVisto[] }) {
   const [filtro, setFiltro] = useState<Filtro>("todos");

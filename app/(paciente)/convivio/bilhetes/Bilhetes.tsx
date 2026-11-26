@@ -17,7 +17,7 @@ type Amigo = { prontuario: string; nome: string; ala: string };
 function Papel({ fantasma, giro, rasgando, children }: { fantasma?: boolean; giro: number; rasgando?: boolean; children: React.ReactNode }) {
   return (
     <article
-      className={`relative flex flex-col gap-2 px-3.5 pt-3 pb-3.5 shadow-[0_2px_6px_rgba(0,0,0,.28)] ${rasgando ? "anim-rasga" : "anim-desdobra"} ${fantasma ? "bg-[#ece3cd] grayscale-[.35]" : "bg-[#f8f2e2]"}`}
+      className={`relative flex flex-col gap-2 px-3.5 pt-3 pb-3.5 shadow-[0_2px_6px_rgba(0,0,0,.28)] ${rasgando ? "anim-rasga" : "anim-desdobra"} ${fantasma ? "bg-[#ddd0b0] grayscale-[.35]" : "bg-[#efe1bd]"}`}
       style={{
         transform: `rotate(${giro}deg)`,
         backgroundImage: "repeating-linear-gradient(180deg,transparent 0 25px,rgba(44,74,138,.16) 25px 26px)",

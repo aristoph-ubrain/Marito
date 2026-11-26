@@ -74,7 +74,7 @@ export function ChatGeral({
         aria-live="polite"
         aria-label="Mensagens do canal geral"
         className="flex h-[52vh] min-h-[320px] flex-col-reverse overflow-y-auto border-[1.5px] border-tinta"
-        style={{ backgroundColor: "#f7f1e1", backgroundImage: "repeating-linear-gradient(#f7f1e1 0 25px,#d8cfb8 25px 26px)", backgroundPosition: "0 6px" }}
+        style={{ backgroundColor: "#efe2c2", backgroundImage: "repeating-linear-gradient(#efe2c2 0 25px,#cfbf98 25px 26px)", backgroundPosition: "0 6px" }}
       >
         <div className="flex flex-col px-2.5 pt-1 pb-1.5">
           {msgs.length === 0 && <p className="m-0 text-xs leading-[26px] opacity-60">— Nenhuma mensagem nas últimas 24 horas.</p>}

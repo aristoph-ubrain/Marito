@@ -21,7 +21,7 @@ export type AlaVista = {
   missoes: number | "?";
 };
 
-const HACHURA = "repeating-linear-gradient(45deg,#e2d7bd 0 5px,#efe6d0 5px 10px)";
+const HACHURA = "repeating-linear-gradient(45deg,#d8c69c 0 5px,#e6d6b0 5px 10px)";
 
 export function PlantaAlas({
   alas,
@@ -83,7 +83,7 @@ export function PlantaAlas({
         </div>
       </section>
 
-      <section className="-mx-2 flex flex-col gap-2 border-2 border-tinta bg-[#f4ecd8] p-2.5">
+      <section className="-mx-2 flex flex-col gap-2 border-2 border-tinta bg-[#e9dbb8] p-2.5">
         <div className="flex justify-between text-[11px] tracking-[.5px]"><span>PLANTA DE EVACUAÇÃO · BLOCO 1 · TÉRREO</span><span>N ↑</span></div>
         <div className="grid grid-cols-6 gap-1">
           {PLANTA.filter((c) => !c.abaixo).map((c) => sala({ id: c.id, className: COLUNAS[c.colunas], altura: c.altura }))}
