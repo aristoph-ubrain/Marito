@@ -10,6 +10,7 @@ import { calcularPendencias, ganharXp, mutarPaciente } from "@/lib/jogo";
 import { buscarOrdem, nivelDaOrdem } from "@/lib/ordens";
 import { buscarPaciente } from "@/lib/pacientes";
 import { registrar } from "@/lib/historico";
+import { listarAvisos, marcarAvisosVistos, type Avisos } from "@/lib/avisos";
 import { colecaoPacientes } from "@/lib/pacientes";
 import { ehOpcaoFoto } from "@/components/Figurinha";
 import { LIMITE_RELATO, validarRelato } from "@/lib/cadastro";
@@ -200,7 +201,7 @@ export async function solicitarConvivio(numero: string): Promise<Resposta> {
   if (existente?.de === eu) return { ok: false, erro: "Solicitação já enviada." };
   if (existente?.de === n) {
     // O outro já tinha pedido: aceitar direto.
-    const r = await col.updateOne({ _id, estado: "pendente" }, { $set: { estado: "aceito" } });
+    const r = await col.updateOne({ _id, estado: "pendente" }, { $set: { estado: "aceito", aceitoEm: new Date() } });
     if (r.modifiedCount === 1) await registrarConvivio(eu, n);
     revalidatePath("/convivio");
     return { ok: true, msg: "Vocês já estão no convívio." };
@@ -240,7 +241,7 @@ export async function responderConvivio(de: string, aceitar: boolean): Promise<R
   const col = await colecaoConvivio();
   const filtro = { _id: idVinculo(de, eu), de, para: eu, estado: "pendente" as const };
   if (aceitar) {
-    const r = await col.updateOne(filtro, { $set: { estado: "aceito" } });
+    const r = await col.updateOne(filtro, { $set: { estado: "aceito", aceitoEm: new Date() } });
     if (r.modifiedCount !== 1) return { ok: false, erro: "Solicitação não encontrada." };
     await registrarConvivio(eu, de);
   } else {
@@ -298,5 +299,20 @@ export async function dispensar(prontuario: string): Promise<Resposta> {
   if (typeof prontuario !== "string" || !/^\d{4}$/.test(prontuario)) return { ok: false, erro: "Sugestão inválida." };
   await dispensarSugestao(eu, prontuario);
   revalidatePath("/convivio");
+  return { ok: true };
+}
+
+/* ---------- Avisos ---------- */
+
+export async function buscarAvisos(): Promise<Avisos | null> {
+  const eu = await prontuarioDaSessao();
+  if (!eu) return null;
+  return listarAvisos(eu);
+}
+
+export async function cienteAvisos(): Promise<Resposta> {
+  const eu = await prontuarioDaSessao();
+  if (!eu) return SEM_SESSAO;
+  await marcarAvisosVistos(eu);
   return { ok: true };
 }

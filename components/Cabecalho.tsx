@@ -1,5 +1,6 @@
 import { sair } from "@/app/(acesso)/actions";
 import { Selo } from "./ui";
+import { AvisosPaciente } from "./Avisos";
 import { Navegacao } from "./Navegacao";
 
 const LINKS_PACIENTE = [
@@ -22,10 +23,11 @@ export function CabecalhoPaciente() {
           <div className="text-[11px] tracking-[1px]">SISTEMA DE REGISTRO E AVALIAÇÃO DE PACIENTES</div>
         </div>
       </div>
-      <div className="flex items-center justify-between text-[11px] tracking-[.5px]">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] tracking-[.5px]">
         <span>
           STATUS: <b className="text-verde">● EM FUNCIONAMENTO</b>
         </span>
+        <AvisosPaciente />
         <form action={sair}>
           <button type="submit" className="min-h-8 cursor-pointer border-0 bg-transparent p-0 text-[11px] tracking-[.5px] text-tinta underline">
             SAIR

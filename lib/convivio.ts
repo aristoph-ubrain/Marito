@@ -3,7 +3,7 @@ import { buscarPaciente, colecaoPacientes, normalizar } from "./pacientes";
 import { diaBrasilia, dois } from "./regras";
 
 /** `_id` canônico ("0108:0121", em ordem) impede pedidos cruzados duplicados. */
-export type Vinculo = { _id: string; de: string; para: string; estado: "pendente" | "aceito"; criadoEm: Date };
+export type Vinculo = { _id: string; de: string; para: string; estado: "pendente" | "aceito"; criadoEm: Date; aceitoEm?: Date };
 export const idVinculo = (a: string, b: string) => [a, b].sort().join(":");
 
 /** Pedido recebido: só o mínimo, antes do aceite. */

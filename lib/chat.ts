@@ -39,6 +39,16 @@ export function limparTexto(t: unknown): string {
   return typeof t === "string" ? t.replace(/\s+/g, " ").trim() : "";
 }
 
+/** Mensagens de outros autores desde um instante (para os avisos). */
+export async function contarMensagensDesde(desde: Date, eu: string) {
+  const col = await colecao();
+  const [total, coordenacao] = await Promise.all([
+    col.countDocuments({ em: { $gt: desde }, prontuario: { $ne: eu } }),
+    col.countDocuments({ em: { $gt: desde }, tipo: { $in: ["coordenacao", "sistema"] } }),
+  ]);
+  return { total, coordenacao };
+}
+
 export async function publicar(m: Omit<Doc, "em" | "_id">) {
   await (await colecao()).insertOne({ ...m, em: new Date() });
 }

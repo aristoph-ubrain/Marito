@@ -43,11 +43,12 @@ export type Paciente = {
   foto?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10; // figurinha escolhida na ficha
   recusou0112?: string; // dia em que recusou o pedido do 0112
   aceitou0112?: boolean;
+  avisosVistosEm?: Date; // último "CIENTE" nos avisos
 };
 
 /** Paciente com todos os campos de jogo preenchidos. */
-export type PacienteJogo = Required<Omit<Paciente, "recusou0112" | "aceitou0112" | "emCurso" | "foto">> &
-  Pick<Paciente, "recusou0112" | "aceitou0112" | "foto"> & { emCurso: EmCurso | null };
+export type PacienteJogo = Required<Omit<Paciente, "recusou0112" | "aceitou0112" | "emCurso" | "foto" | "avisosVistosEm">> &
+  Pick<Paciente, "recusou0112" | "aceitou0112" | "foto" | "avisosVistosEm"> & { emCurso: EmCurso | null };
 
 export function normalizar(p: Paciente): PacienteJogo {
   return {
