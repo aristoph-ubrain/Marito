@@ -34,7 +34,7 @@ const FANTASMA: Colega = {
   ala: "ALA C · Q. 112",
   situacao: "███",
   cor: "var(--color-carimbo)",
-  atributos: Array(10).fill("?"),
+  atributos: Array(6).fill("?"),
 };
 
 /** Lista amigos, pedidos recebidos e enviados do paciente `eu`. Só expõe dados públicos. */

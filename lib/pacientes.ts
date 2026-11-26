@@ -1,7 +1,7 @@
 import { AREA_INICIAL } from "./alas";
 import bcrypt from "bcryptjs";
 import { MongoServerError } from "mongodb";
-import { atributosIniciais, atributosZerados, type ChaveAtributo } from "./atributos";
+import { ATRIBUTO_INICIAL, ATRIBUTOS_REMOVIDOS, atributosIniciais, atributosZerados, CHAVES, type ChaveAtributo } from "./atributos";
 import { banco, umaVez } from "./db";
 import { registrar } from "./historico";
 import { PONTOS_POR_NIVEL } from "./regras";
@@ -52,7 +52,8 @@ export type PacienteJogo = Required<Omit<Paciente, "recusou0112" | "aceitou0112"
 export function normalizar(p: Paciente): PacienteJogo {
   return {
     ...p,
-    atributos: { ...atributosZerados(), ...(p.atributos ?? {}) },
+    // Só os atributos atuais (ignora chaves antigas que ainda estejam no banco).
+    atributos: Object.fromEntries(CHAVES.map((c) => [c, p.atributos?.[c] ?? atributosZerados()[c]])) as Record<ChaveAtributo, number>,
     xpTotal: p.xpTotal ?? p.xp,
     versao: p.versao ?? 0,
     missoesHoje: p.missoesHoje ?? { dia: "", n: 0 },
@@ -71,7 +72,30 @@ export type NovoPaciente = Pick<Paciente, "nome" | "idade" | "sexo" | "altura" |
 export async function colecaoPacientes() {
   const col = (await banco()).collection<Paciente>("pacientes");
   await umaVez("idx:pacientes", () => col.createIndex({ prontuario: 1 }, { unique: true }));
+  await umaVez("migracao:atributos-6", () => migrarAtributos());
   return col;
+}
+
+/**
+ * Migração única para os 6 atributos: os pontos acima do inicial em AFI, COM, RIT, DOM e SIM
+ * voltam como pontos para distribuir; VIT começa no valor inicial. Marca feita em `contadores`.
+ */
+async function migrarAtributos() {
+  const db = await banco();
+  const marca = db.collection<{ _id: string; feito: Date }>("contadores");
+  if (await marca.findOne({ _id: "migracao-atributos-6" })) return;
+  // Documento sem tipo fixo: a migração lida com campos que não existem mais no tipo Paciente.
+  const col = db.collection<{ prontuario: string; atributos?: Record<string, number>; pontos?: number; versao?: number }>("pacientes");
+  const filtro = { $or: ATRIBUTOS_REMOVIDOS.map((k) => ({ [`atributos.${k}`]: { $exists: true } })) };
+  for (const p of await col.find(filtro, { projection: { prontuario: 1, atributos: 1 } }).toArray()) {
+    const devolver = ATRIBUTOS_REMOVIDOS.reduce((s, k) => s + Math.max(0, (p.atributos?.[k] ?? 0) - ATRIBUTO_INICIAL), 0);
+    const unset = Object.fromEntries(ATRIBUTOS_REMOVIDOS.map((k) => [`atributos.${k}`, ""] as const)) as Record<string, "">;
+    await col.updateOne(
+      { prontuario: p.prontuario },
+      { $inc: { pontos: devolver, versao: 1 }, $unset: unset, ...(p.atributos?.VIT === undefined ? { $set: { "atributos.VIT": ATRIBUTO_INICIAL } } : {}) },
+    );
+  }
+  await marca.updateOne({ _id: "migracao-atributos-6" }, { $set: { feito: new Date() } }, { upsert: true });
 }
 
 /** Prontuário aleatório de 0120 a 9999 (9.880 números). O 0112 é reservado. */

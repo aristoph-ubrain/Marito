@@ -125,10 +125,10 @@ export function MarcasContagem({ base, valor }: { base: number; valor: number })
   );
 }
 
-/** Grade compacta com os 10 atributos. */
+/** Grade compacta com os atributos. */
 export function GradeAtributos({ itens }: { itens: { sigla: string; valor: number | string }[] }) {
   return (
-    <div className="grid grid-cols-5 gap-1 text-center text-[11px]">
+    <div className="grid grid-cols-6 gap-1 text-center text-[11px]">
       {itens.map((a) => (
         <div key={a.sigla} className="flex flex-col border border-tinta/45 py-1">
           <span>{a.sigla}</span>

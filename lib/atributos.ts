@@ -1,17 +1,17 @@
-export type ChaveAtributo = "FOR" | "AGI" | "SOR" | "CON" | "AFI" | "VIN" | "COM" | "RIT" | "DOM" | "SIM";
+export type ChaveAtributo = "FOR" | "AGI" | "VIT" | "CON" | "VIN" | "SOR";
 
+/** Os 6 atributos do paciente (desde 25/11/2026; antes eram 10). */
 export const ATRIBUTOS: { chave: ChaveAtributo; sigla: string; nome: string; descricao: string }[] = [
   { chave: "FOR", sigla: "FOR", nome: "Força", descricao: "Potência muscular, dano físico e capacidade de carregar peso." },
   { chave: "AGI", sigla: "AGI", nome: "Agilidade", descricao: "Velocidade, reflexos, esquiva e movimentos rápidos." },
-  { chave: "SOR", sigla: "SOR", nome: "Sorte", descricao: "Influência sobre acontecimentos imprevisíveis." },
+  { chave: "VIT", sigla: "VIT", nome: "Vitalidade", descricao: "Resistência física e mental: saúde e capacidade de aguentar o que o hospital faz com o paciente." },
   { chave: "CON", sigla: "CON", nome: "Conhecimento", descricao: "Domínio de ciências, ocultismo, história e conhecimentos específicos." },
-  { chave: "AFI", sigla: "AFI", nome: "Afinidade", descricao: "Sensibilidade e conexão com o paranormal, rituais e manifestações sobrenaturais." },
-  { chave: "VIN", sigla: "VÍN", nome: "Vínculo", descricao: "Conexão e comunicação com entidades e espíritos." },
-  { chave: "COM", sigla: "COM", nome: "Comando", descricao: "Capacidade de controlar e direcionar manifestações sobrenaturais." },
-  { chave: "RIT", sigla: "RIT", nome: "Ritualismo", descricao: "Capacidade de realizar rituais e procedimentos ocultos." },
-  { chave: "DOM", sigla: "DOM", nome: "Dominação", descricao: "Capacidade de resistir ou impor sua vontade sobre outras consciências." },
-  { chave: "SIM", sigla: "SIM", nome: "Simbiose", descricao: "Capacidade de compartilhar corpo, sentidos e habilidades com entidades." },
+  { chave: "VIN", sigla: "VIN", nome: "Vínculo", descricao: "Conexão e comunicação com entidades e espíritos." },
+  { chave: "SOR", sigla: "SOR", nome: "Sorte", descricao: "Influência sobre acontecimentos imprevisíveis." },
 ];
+
+/** Atributos que existiam antes e foram removidos (os pontos voltam para distribuir). */
+export const ATRIBUTOS_REMOVIDOS = ["AFI", "COM", "RIT", "DOM", "SIM"] as const;
 
 export const CHAVES = ATRIBUTOS.map((a) => a.chave);
 export const ehChave = (c: unknown): c is ChaveAtributo => typeof c === "string" && (CHAVES as string[]).includes(c);
