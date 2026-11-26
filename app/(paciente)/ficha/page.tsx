@@ -49,7 +49,10 @@ async function Ficha() {
 
       <section className="flex flex-col gap-2 text-sm leading-snug">
         <Titulo>II. HISTÓRICO CLÍNICO</Titulo>
-        <div><b>Diagnóstico:</b> {p.diagnostico}</div>
+        <div className="flex flex-col gap-0.5 border-2 border-carimbo bg-carimbo/[.07] px-2.5 py-2">
+          <span className="text-[11px] tracking-[1.5px] text-carimbo">DIAGNÓSTICO · EQUIPE MÉDICA</span>
+          <span className="font-maquina text-xl leading-tight">{p.diagnostico}</span>
+        </div>
         <RelatoEditavel relato={p.relato ?? ""} />
       </section>
 
