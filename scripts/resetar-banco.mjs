@@ -10,7 +10,7 @@ import { MongoClient } from "mongodb";
 
 // No PowerShell o "--" some e o npm recebe --tudo como configuração própria (npm_config_tudo).
 const tudo = argv.includes("--tudo") || process.env.npm_config_tudo === "true" || process.env.MARITO_RESET_TUDO === "1";
-const apagar = ["pacientes", "historico", "convivio", "tentativas", "alas", "mensagens", "bilhetes"];
+const apagar = ["pacientes", "historico", "convivio", "tentativas", "alas", "mensagens", "bilhetes", "sugestoes_dispensadas"];
 if (tudo) apagar.push("ordens", "contadores", "equipe");
 
 const cliente = new MongoClient(process.env.MONGODB_URI);

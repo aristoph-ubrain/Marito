@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { alaAcessivel, listarAlas } from "@/lib/alas";
 import { CHAVES, ehChave, nomeDe, type ChaveAtributo } from "@/lib/atributos";
-import { colecaoConvivio, idVinculo } from "@/lib/convivio";
+import { buscarPacientes, colecaoConvivio, dispensarSugestao, idVinculo, type EstadoVinculo, type PacientePublico } from "@/lib/convivio";
 import { MongoServerError } from "mongodb";
 import { prontuarioDaSessao } from "@/lib/dal";
 import { calcularPendencias, ganharXp, mutarPaciente } from "@/lib/jogo";
@@ -281,5 +281,22 @@ export async function rasgar(id: string): Promise<Resposta> {
   const erro = await rasgarBilhete(eu, id);
   if (erro) return { ok: false, erro };
   revalidatePath("/convivio", "layout");
+  return { ok: true };
+}
+
+/* ---------- Busca e sugestões de convívio ---------- */
+
+export async function buscarConvivio(termo: string): Promise<(PacientePublico & { estado: EstadoVinculo })[]> {
+  const eu = await prontuarioDaSessao();
+  if (!eu || typeof termo !== "string") return [];
+  return buscarPacientes(eu, termo);
+}
+
+export async function dispensar(prontuario: string): Promise<Resposta> {
+  const eu = await prontuarioDaSessao();
+  if (!eu) return SEM_SESSAO;
+  if (typeof prontuario !== "string" || !/^\d{4}$/.test(prontuario)) return { ok: false, erro: "Sugestão inválida." };
+  await dispensarSugestao(eu, prontuario);
+  revalidatePath("/convivio");
   return { ok: true };
 }

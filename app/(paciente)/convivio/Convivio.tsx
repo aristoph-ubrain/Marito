@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Figurinha } from "@/components/Figurinha";
 import { Anotacao, Carimbo, Censura, Foto3x4, GradeAtributos, Rodape, Titulo } from "@/components/ui";
 import { ATRIBUTOS } from "@/lib/atributos";
-import type { Colega, Pedido } from "@/lib/convivio";
-import { responderConvivio, solicitarConvivio } from "../actions";
+import type { Colega, EstadoVinculo, PacientePublico, Pedido, Sugestao } from "@/lib/convivio";
+import { buscarConvivio, dispensar, responderConvivio, solicitarConvivio } from "../actions";
 
 export function Convivio({
   meuProntuario,
@@ -15,30 +15,47 @@ export function Convivio({
   recebidos,
   enviados,
   bilhetesNaoLidos,
+  sugestoes,
 }: {
   meuProntuario: string;
   bilhetesNaoLidos: number;
+  sugestoes: Sugestao[];
   amigos: Colega[];
   recebidos: Pedido[];
   enviados: string[];
 }) {
   const router = useRouter();
-  const [numero, setNumero] = useState("");
+  const [busca, setBusca] = useState("");
+  const [resultados, setResultados] = useState<{ termo: string; lista: (PacientePublico & { estado: EstadoVinculo })[] } | null>(null);
+  const [buscando, iniciarBusca] = useTransition();
+
+  // Busca com pequena espera enquanto o jogador digita.
+  useEffect(() => {
+    const t = busca.trim();
+    if (t.length < 2) return;
+    const id = setTimeout(() => {
+      iniciarBusca(async () => setResultados({ termo: t, lista: await buscarConvivio(t) }));
+    }, 300);
+    return () => clearTimeout(id);
+  }, [busca]);
+  const lista = busca.trim().length >= 2 && resultados?.termo === busca.trim() ? resultados.lista : null;
   const [msg, setMsg] = useState<{ texto: string; ok: boolean } | null>(null);
   const [aberto, setAberto] = useState<string | null>(null);
   const [ocupado, iniciar] = useTransition();
 
-  const solicitar = (e: React.FormEvent) => {
-    e.preventDefault();
-    const n = numero.trim();
-    if (!/^\d{4}$/.test(n)) return setMsg({ texto: "Informe os 4 dígitos do prontuário.", ok: false });
+  const pedir = (n: string) =>
     iniciar(async () => {
       const r = await solicitarConvivio(n);
       setMsg(r.ok ? { texto: r.msg ?? "Solicitação enviada.", ok: true } : { texto: r.erro, ok: false });
-      if (r.ok) setNumero("");
+      if (r.ok && resultados) setResultados({ ...resultados, lista: resultados.lista.map((p) => (p.prontuario === n ? { ...p, estado: "enviado" } : p)) });
       router.refresh();
     });
-  };
+
+  const tirarSugestao = (n: string) =>
+    iniciar(async () => {
+      await dispensar(n);
+      router.refresh();
+    });
 
   const responder = (de: string, aceitar: boolean) =>
     iniciar(async () => {
@@ -90,17 +107,38 @@ export function Convivio({
         <p className="m-0 text-xs leading-snug opacity-85">
           Pacientes autorizados a manter contato. O vínculo vale assim que o outro paciente aceitar.
         </p>
-        <form onSubmit={solicitar} className="flex flex-col gap-2 border-2 border-tinta p-3">
-          <label htmlFor="pront" className="rotulo">ADICIONAR PACIENTE · Nº DO PRONTUÁRIO</label>
-          <div className="flex gap-2">
-            <input id="pront" inputMode="numeric" maxLength={4} placeholder="0000" value={numero}
-              onChange={(e) => { setNumero(e.target.value.replace(/\D/g, "").slice(0, 4)); setMsg(null); }}
-              className="campo min-w-0 flex-1 text-xl tracking-[4px]" />
-            <button type="submit" className="btn btn-pri" disabled={ocupado}>SOLICITAR</button>
-          </div>
+        <div className="flex flex-col gap-2 border-2 border-tinta p-3">
+          <label htmlFor="busca" className="rotulo">BUSCAR PACIENTE · NOME OU Nº DO PRONTUÁRIO</label>
+          <input id="busca" type="search" autoComplete="off" placeholder="Ex.: Marta ou 0140" maxLength={40} value={busca}
+            onChange={(e) => { setBusca(e.target.value); setMsg(null); }} className="campo text-base" aria-describedby="busca-ajuda" />
+          {busca.trim().length >= 2 && (
+            <div role="list" aria-label="Resultados da busca" aria-busy={buscando} className="flex flex-col gap-1.5">
+              {!lista ? (
+                <p className="m-0 text-xs opacity-70">Consultando o registro…</p>
+              ) : lista.length === 0 ? (
+                <p className="m-0 text-xs opacity-75">Nenhum paciente encontrado com “{busca.trim()}”.</p>
+              ) : (
+                lista.map((p) => (
+                  <div key={p.prontuario} role="listitem" className="flex items-center gap-2.5 border-t border-dashed border-tinta pt-1.5">
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="font-maquina text-[15px]">{p.nome}</span>
+                      <span className="text-[11px] opacity-80">Pront. {p.prontuario} · {p.area} · Nv. {p.nivel}</span>
+                    </div>
+                    {p.estado === "livre" ? (
+                      <button type="button" className="btn btn-pri min-h-10 px-2.5 text-xs" disabled={ocupado} onClick={() => pedir(p.prontuario)}>SOLICITAR</button>
+                    ) : (
+                      <span className="text-right text-[11px] opacity-75">
+                        {p.estado === "amigo" ? "já no convívio" : p.estado === "enviado" ? "aguardando resposta" : "pediu convívio a você"}
+                      </span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
           {msg && <p role="status" className={`m-0 text-xs ${msg.ok ? "text-verde" : "text-carimbo"}`}>{msg.texto}</p>}
-          <span className="text-[11px] opacity-70">Seu prontuário: {meuProntuario}</span>
-        </form>
+          <span id="busca-ajuda" className="text-[11px] opacity-70">Seu prontuário: {meuProntuario} · A busca mostra só nome, área e nível.</span>
+        </div>
         <Link href="/convivio/bilhetes" className="flex min-h-12 items-center justify-between gap-2.5 border-[1.5px] border-tinta bg-[#efe1bd] px-3 text-[13px] text-tinta no-underline">
           <span>
             ✉ BILHETES
@@ -113,6 +151,26 @@ export function Convivio({
           <b aria-hidden="true">→</b>
         </Link>
       </section>
+
+      {sugestoes.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <span className="text-xs tracking-[.5px]"><b>SUGESTÕES DE CONVÍVIO</b></span>
+          {sugestoes.map((g) => (
+            <div key={g.prontuario} className="flex items-center gap-2.5 border-[1.5px] border-tinta bg-papel-claro p-2.5">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="font-maquina text-[15px]">{g.nome}</span>
+                <span className="text-[11px] opacity-80">Pront. {g.prontuario} · {g.area} · Nv. {g.nivel}</span>
+                <span className={`text-[11px] ${g.estranha ? "text-carimbo" : "text-verde"}`}>{g.motivo}</span>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <button type="button" className="btn btn-pri min-h-10 px-2.5 text-xs" disabled={ocupado} onClick={() => pedir(g.prontuario)}>SOLICITAR</button>
+                <button type="button" className="min-h-8 cursor-pointer border-0 bg-transparent p-0 text-[11px] text-tinta underline" disabled={ocupado}
+                  onClick={() => tirarSugestao(g.prontuario)} aria-label={`Dispensar a sugestão ${g.nome}`}>dispensar</button>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       {recebidos.length > 0 && (
         <section className="flex flex-col gap-2">
