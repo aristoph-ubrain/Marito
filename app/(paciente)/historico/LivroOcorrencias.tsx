@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Anotacao, Rodape, Titulo } from "@/components/ui";
 import type { TipoRegistro } from "@/lib/historico";
 
-export type RegistroVisto = { hora: string; tipo: TipoRegistro; codigo: string; texto: string; xp?: string; nota?: string; futuro?: boolean; vezes?: number };
-export type DiaVisto = { chave: string; data: string; rasgado?: boolean; registros: RegistroVisto[] };
+import type { DiaVisto, RegistroVisto } from "@/lib/livro";
+export type { DiaVisto, RegistroVisto };
 
 type Filtro = "todos" | TipoRegistro;
 const FILTROS: [Filtro, string][] = [

@@ -5,7 +5,16 @@ import { useState, useTransition } from "react";
 import { Anotacao, GradeAtributos, Titulo } from "@/components/ui";
 import { ATRIBUTOS } from "@/lib/atributos";
 import { dois, milhar, xpParaProximoNivel } from "@/lib/regras";
-import { anotar, salvarDiagnostico } from "./actions";
+import type { DiaVisto } from "@/lib/livro";
+import { anotar, historicoDoPaciente, salvarDiagnostico } from "./actions";
+
+const ETIQUETA: Record<string, { rotulo: string; cor: string }> = {
+  ev: { rotulo: "EVOLUÇÃO", cor: "var(--color-verde)" },
+  os: { rotulo: "ATIVIDADE", cor: "var(--color-tinta)" },
+  ac: { rotulo: "ACESSO", cor: "var(--color-ocre)" },
+  cv: { rotulo: "CONVÍVIO", cor: "var(--color-caneta)" },
+  eq: { rotulo: "EQUIPE", cor: "var(--color-carimbo)" },
+};
 
 export type PacienteResumo = {
   id: string;
@@ -28,6 +37,17 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
   const [diag, setDiag] = useState("");
   const [msg, setMsg] = useState<{ texto: string; ok: boolean } | null>(null);
   const [ocupado, iniciar] = useTransition();
+  const [livro, setLivro] = useState<{ id: string; dias: DiaVisto[] | null; erro?: string } | null>(null);
+  const [lendo, iniciarLeitura] = useTransition();
+
+  const abrirHistorico = (id: string) => {
+    if (livro?.id === id) return setLivro(null);
+    setLivro({ id, dias: null });
+    iniciarLeitura(async () => {
+      const r = await historicoDoPaciente(id);
+      setLivro(r.ok ? { id, dias: r.dias } : { id, dias: [], erro: r.erro });
+    });
+  };
 
   const q = busca.trim().toLowerCase();
   const lista = pacientes.filter((p) => !q || p.id.includes(q) || p.nome.toLowerCase().includes(q));
@@ -39,6 +59,7 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
     setMsg(null);
     setNota("");
     setDiag(p?.diagnostico ?? "");
+    setLivro(null);
   };
 
   const executar = (acao: () => Promise<{ ok: true; msg: string } | { ok: false; erro: string }>, depois?: () => void) =>
@@ -113,6 +134,41 @@ export function GestaoPacientes({ pacientes }: { pacientes: PacienteResumo[] }) 
                     <button type="button" className="btn btn-pri" disabled={ocupado || !nota.trim()}
                       onClick={() => executar(() => anotar(p.id, nota), () => setNota(""))}>REGISTRAR ANOTAÇÃO</button>
                     {p.notas.map((n, i) => <div key={i} className="border-t border-dashed border-tinta pt-1.5 text-xs leading-snug">{n}</div>)}
+                  </div>
+                  <div className="flex flex-col gap-2 border-[1.5px] border-tinta p-2.5">
+                    <button type="button" className="btn justify-between" aria-expanded={livro?.id === p.id} onClick={() => abrirHistorico(p.id)}>
+                      <span>HISTÓRICO DO PACIENTE</span><span aria-hidden="true">{livro?.id === p.id ? "▾" : "▸"}</span>
+                    </button>
+                    {livro?.id === p.id && (
+                      <div className="flex max-h-[420px] flex-col gap-3 overflow-y-auto pr-1" aria-busy={lendo}>
+                        {lendo || !livro.dias ? (
+                          <p className="m-0 text-xs opacity-70">Abrindo o livro de ocorrências…</p>
+                        ) : livro.erro ? (
+                          <p role="alert" className="m-0 text-xs text-carimbo">{livro.erro}</p>
+                        ) : livro.dias.length === 0 ? (
+                          <p className="m-0 text-xs opacity-70">Nenhum lançamento registrado.</p>
+                        ) : (
+                          livro.dias.map((d) => (
+                            <div key={d.chave} className="flex flex-col gap-1">
+                              <b className="font-maquina text-sm font-normal">{d.data}</b>
+                              <ol className="m-0 flex list-none flex-col gap-1.5 border-l-2 border-tinta p-0 pl-2.5">
+                                {d.registros.map((r, i) => (
+                                  <li key={i} className="flex flex-col gap-0.5 text-xs leading-snug">
+                                    <span className="flex items-center gap-1.5">
+                                      <b>{r.hora}</b>
+                                      <span className="border px-1 text-[10px]" style={{ borderColor: ETIQUETA[r.tipo]?.cor, color: ETIQUETA[r.tipo]?.cor }}>{ETIQUETA[r.tipo]?.rotulo ?? r.tipo}</span>
+                                      <span className="opacity-70">{r.codigo}</span>
+                                      {r.vezes && r.vezes > 1 && <span className="ml-auto border border-tinta px-1 font-maquina text-[10px]">×{r.vezes}</span>}
+                                    </span>
+                                    <span>{r.texto}{r.xp && <b className="text-verde"> {r.xp}</b>}</span>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
                   {msg && <p role="status" className={`m-0 text-xs ${msg.ok ? "text-verde" : "text-carimbo"}`}>{msg.texto}</p>}
                 </div>

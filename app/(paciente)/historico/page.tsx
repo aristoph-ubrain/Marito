@@ -3,9 +3,10 @@ import { Carregando } from "@/components/Carregando";
 import { alaAcessivel, listarAlas } from "@/lib/alas";
 import { pacienteAtual } from "@/lib/dal";
 import { listarHistorico } from "@/lib/historico";
+import { montarDias } from "@/lib/livro";
 import { dataCurta, diaBrasilia, dois, horaBrasilia, milhar } from "@/lib/regras";
 import { anotacaoDoDia, previsaoDeAmanha } from "./fantasma";
-import { LivroOcorrencias, type DiaVisto } from "./LivroOcorrencias";
+import { LivroOcorrencias } from "./LivroOcorrencias";
 
 async function Livro() {
   const p = await pacienteAtual();
@@ -14,41 +15,8 @@ async function Livro() {
   const hoje = diaBrasilia(agora);
   const amanha = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
 
-  // As anotações da equipe ficam na ficha; aqui entram no livro junto com os demais lançamentos.
-  const notas = p.anotacoes.map((a) => ({ em: a.em, tipo: "eq" as const, codigo: "EQ", texto: `${a.autor}: ${a.texto}`, xp: undefined }));
-  const todos = [...registros, ...notas].sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime());
-
-  const dias: DiaVisto[] = [];
-  // Lançamentos iguais no mesmo dia (mesma atividade, mesmo texto) viram um só, com "×N" e a XP somada.
-  const grupos = new Map<string, { vezes: number; xp: number; i: number }>();
-  for (const r of todos) {
-    const em = new Date(r.em);
-    const chave = diaBrasilia(em);
-    let dia = dias.find((d) => d.chave === chave);
-    if (!dia) {
-      dia = { chave, data: dataCurta(em) + (chave === hoje ? " · HOJE" : ""), registros: [] };
-      dias.push(dia);
-    }
-    const chaveGrupo = `${chave}|${r.tipo}|${r.codigo}|${r.texto}`;
-    const g = grupos.get(chaveGrupo);
-    if (g) {
-      // A lista vem da mais nova para a mais antiga: a hora mostrada é a da última vez.
-      g.vezes += 1;
-      g.xp += r.xp ?? 0;
-      const reg = dia.registros[g.i];
-      reg.vezes = g.vezes;
-      reg.xp = g.xp ? `+${milhar(g.xp)} XP` : undefined;
-      continue;
-    }
-    grupos.set(chaveGrupo, { vezes: 1, xp: r.xp ?? 0, i: dia.registros.length });
-    dia.registros.push({
-      hora: horaBrasilia(em),
-      tipo: r.tipo,
-      codigo: r.codigo,
-      texto: r.texto,
-      xp: r.xp ? `+${milhar(r.xp)} XP` : undefined,
-    });
-  }
+  // Lançamentos + anotações da equipe, por dia, com repetições agrupadas ("×N").
+  const dias = montarDias(registros, p.anotacoes, agora);
   // O 0112 deixa uma anotação por dia às 03:17 (hoje, só depois desse horário). Sem filtro próprio: aparece em TODOS.
   const passou0317 = horaBrasilia(agora) >= "03:17";
   for (const d of dias) {
