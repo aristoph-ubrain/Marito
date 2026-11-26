@@ -9,7 +9,7 @@ import { LivroOcorrencias, type DiaVisto } from "./LivroOcorrencias";
 
 async function Livro() {
   const p = await pacienteAtual();
-  const [registros, alas] = await Promise.all([listarHistorico(p.prontuario), listarAlas()]);
+  const [registros, alas] = await Promise.all([listarHistorico(p.prontuario, 1000), listarAlas()]);
   const agora = new Date();
   const hoje = diaBrasilia(agora);
   const amanha = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
@@ -19,6 +19,8 @@ async function Livro() {
   const todos = [...registros, ...notas].sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime());
 
   const dias: DiaVisto[] = [];
+  // Lançamentos iguais no mesmo dia (mesma atividade, mesmo texto) viram um só, com "×N" e a XP somada.
+  const grupos = new Map<string, { vezes: number; xp: number; i: number }>();
   for (const r of todos) {
     const em = new Date(r.em);
     const chave = diaBrasilia(em);
@@ -27,6 +29,18 @@ async function Livro() {
       dia = { chave, data: dataCurta(em) + (chave === hoje ? " · HOJE" : ""), registros: [] };
       dias.push(dia);
     }
+    const chaveGrupo = `${chave}|${r.tipo}|${r.codigo}|${r.texto}`;
+    const g = grupos.get(chaveGrupo);
+    if (g) {
+      // A lista vem da mais nova para a mais antiga: a hora mostrada é a da última vez.
+      g.vezes += 1;
+      g.xp += r.xp ?? 0;
+      const reg = dia.registros[g.i];
+      reg.vezes = g.vezes;
+      reg.xp = g.xp ? `+${milhar(g.xp)} XP` : undefined;
+      continue;
+    }
+    grupos.set(chaveGrupo, { vezes: 1, xp: r.xp ?? 0, i: dia.registros.length });
     dia.registros.push({
       hora: horaBrasilia(em),
       tipo: r.tipo,

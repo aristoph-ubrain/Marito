@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Anotacao, Rodape, Titulo } from "@/components/ui";
 import type { TipoRegistro } from "@/lib/historico";
 
-export type RegistroVisto = { hora: string; tipo: TipoRegistro; codigo: string; texto: string; xp?: string; nota?: string; futuro?: boolean };
+export type RegistroVisto = { hora: string; tipo: TipoRegistro; codigo: string; texto: string; xp?: string; nota?: string; futuro?: boolean; vezes?: number };
 export type DiaVisto = { chave: string; data: string; rasgado?: boolean; registros: RegistroVisto[] };
 
 type Filtro = "todos" | TipoRegistro;
@@ -76,6 +76,11 @@ export function LivroOcorrencias({ prontuario, resumo, dias }: { prontuario: str
                       <span className="whitespace-nowrap border px-1.5 text-[10px] tracking-[.5px]"
                         style={{ borderColor: ETIQUETA[r.tipo].cor, color: ETIQUETA[r.tipo].cor }}>{ETIQUETA[r.tipo].rotulo}</span>
                       <span className="opacity-70">{r.codigo}</span>
+                      {r.vezes && r.vezes > 1 && (
+                        <span className="ml-auto border-[1.5px] border-tinta px-1.5 font-maquina text-[11px]" aria-label={`repetida ${r.vezes} vezes`} title={`última às ${r.hora}`}>
+                          ×{r.vezes}
+                        </span>
+                      )}
                     </div>
                     <div className="text-[13px] leading-snug">{r.texto}</div>
                     {r.xp && <div className="text-xs font-bold text-verde">{r.xp}</div>}
