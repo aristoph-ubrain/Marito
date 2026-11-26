@@ -27,6 +27,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#2a211a",
+  // O jogo tem cores próprias (papel velho): pede ao navegador para não aplicar o modo escuro automático.
+  colorScheme: "only light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +37,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="pt-BR"
       className={`${specialElite.variable} ${courierPrime.variable} ${caveat.variable} h-full antialiased`}
     >
+      <head>
+        {/* Extensões de modo escuro (ex.: Dark Reader) também respeitam este aviso. */}
+        <meta name="darkreader-lock" />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

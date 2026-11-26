@@ -21,6 +21,11 @@
   --font-mao: var(--font-caveat), cursive;
 }
 
+:root {
+  /* Só tema claro: impede que o modo escuro do celular inverta as cores do papel. */
+  color-scheme: only light;
+}
+
 html,
 body {
   background: var(--color-madeira);
