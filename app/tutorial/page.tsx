@@ -46,7 +46,7 @@ export default function TutorialPage() {
 
       <p className="m-0 text-[13px] leading-relaxed">
         Aqui você é um paciente. Cumpra ordens de atividade, ganhe experiência (XP), suba de nível e fortaleça seus atributos para
-        alcançar alas mais fundas do hospital. As atividades continuam correndo mesmo com o sistema fechado.
+        alcançar áreas mais fundas do hospital. As atividades continuam correndo mesmo com o sistema fechado.
       </p>
 
       <ol className="m-0 flex list-none flex-col gap-[18px] p-0">
@@ -68,10 +68,10 @@ export default function TutorialPage() {
 
         <Passo n={3} titulo="ORDENS DE ATIVIDADE" onde="MISSÕES">
           <p className="m-0">
-            Cada ordem pede um <b>nível mínimo</b>, definido pela coordenação, e acesso à ala onde acontece. Inicie uma por vez e espere o tempo dela; não há limite
+            Cada ordem pede um <b>nível mínimo</b>, definido pela coordenação, e acesso à área onde acontece. Inicie uma por vez e espere o tempo dela; não há limite
             por dia. Pode fechar o sistema: ao voltar, a XP já estará no seu prontuário.
           </p>
-          <p className="m-0">Ordens em vermelho estão bloqueadas: falta nível ou a ala ainda não foi liberada.</p>
+          <p className="m-0">Ordens em vermelho estão bloqueadas: falta nível ou a área ainda não foi liberada.</p>
         </Passo>
 
         <Passo n={4} titulo="NÍVEIS">
@@ -94,12 +94,12 @@ export default function TutorialPage() {
           </table>
         </Passo>
 
-        <Passo n={5} titulo="ALAS" onde="ALAS">
+        <Passo n={5} titulo="ÁREAS" onde="ALAS">
           <p className="m-0">
-            As alas abrem conforme o nível. Toque numa ala liberada e use <b>IR PARA ESTA ALA</b>. A primeira entrada em cada ala rende{" "}
+            Cada área do hospital (Recepção, Farmácia, Refeitório, Dormitório, Internação, Consultório, Subsolo, Ala C, Capela) abre num nível próprio. Toque numa área liberada e use <b>IR PARA ESTA ÁREA</b>. A primeira entrada em cada uma rende{" "}
             <b>+{BONUS_PRIMEIRA_VISITA_ALA} XP</b>.
           </p>
-          <p className="m-0">Algumas alas podem ser interditadas pela coordenação sem aviso.</p>
+          <p className="m-0">Algumas áreas podem ser interditadas pela coordenação sem aviso.</p>
         </Passo>
 
         <Passo n={6} titulo="ROTINA DIÁRIA">
@@ -137,7 +137,7 @@ export default function TutorialPage() {
           <li>Entre e receba o bônus diário.</li>
           <li>Distribua os pontos novos.</li>
           <li>Inicie uma ordem de atividade.</li>
-          <li>Visite uma ala que ainda não conhece.</li>
+          <li>Visite uma área que ainda não conhece.</li>
           <li>Leia e responda os bilhetes do seu convívio.</li>
           <li>Volte mais tarde para recolher a XP.</li>
         </ol>

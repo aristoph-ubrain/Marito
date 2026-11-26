@@ -1,3 +1,4 @@
+import { AREA_INICIAL } from "./alas";
 import bcrypt from "bcryptjs";
 import { MongoServerError } from "mongodb";
 import { atributosIniciais, atributosZerados, type ChaveAtributo } from "./atributos";
@@ -56,7 +57,7 @@ export function normalizar(p: Paciente): PacienteJogo {
     versao: p.versao ?? 0,
     missoesHoje: p.missoesHoje ?? { dia: "", n: 0 },
     bonusDia: p.bonusDia ?? "",
-    alasVisitadas: p.alasVisitadas ?? ["ALA A"],
+    alasVisitadas: p.alasVisitadas ?? [AREA_INICIAL],
     local: p.local ?? p.ala,
     emCurso: p.emCurso ?? null,
     concluidas: p.concluidas ?? {},
@@ -97,7 +98,7 @@ export async function criarPaciente(dados: NovoPaciente, senha: string): Promise
       xp: 0,
       // Pontos iniciais: o nível 1 concede os mesmos 3 pontos de cada nível.
       pontos: PONTOS_POR_NIVEL,
-      ala: "ALA A",
+      ala: AREA_INICIAL,
       quarto: prontuario.slice(1),
       criadoEm: agora,
       atributos: atributosIniciais(), // todos começam com 1
@@ -105,8 +106,8 @@ export async function criarPaciente(dados: NovoPaciente, senha: string): Promise
       versao: 0,
       missoesHoje: { dia: "", n: 0 },
       bonusDia: "",
-      alasVisitadas: ["ALA A"],
-      local: "ALA A",
+      alasVisitadas: [AREA_INICIAL],
+      local: AREA_INICIAL,
       emCurso: null,
       concluidas: {},
       diagnostico: "Em avaliação",
@@ -115,7 +116,7 @@ export async function criarPaciente(dados: NovoPaciente, senha: string): Promise
     try {
       await col.insertOne({ ...paciente });
       await registrar(prontuario, [
-        { em: agora, tipo: "ac", codigo: "AC-A", texto: `Internação registrada. Ala A, quarto ${paciente.quarto}.` },
+        { em: agora, tipo: "ac", codigo: "AC-D", texto: `Internação registrada. Dormitório, leito ${paciente.quarto}.` },
         { em: new Date(agora.getTime() + 1000), tipo: "ev", codigo: "EV-01", texto: "Classificação inicial registrada: ANÔMALO." },
       ]);
       return paciente;

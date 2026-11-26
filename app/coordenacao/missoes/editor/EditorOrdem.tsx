@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { dois, duracaoTexto, DURACOES_MISSAO } from "@/lib/regras";
 import { salvarOrdem } from "../actions";
 
-const ALAS = ["TÉRREO", "ALA A", "ALA B", "CONSULTÓRIOS", "ALA C", "CAPELA"];
+const ALAS = ["RECEPÇÃO", "FARMÁCIA", "REFEITÓRIO", "DORMITÓRIO", "INTERNAÇÃO", "CONSULTÓRIO", "SUBSOLO", "ALA C", "CAPELA"];
 
 export type OrdemInicial = {
   codigo: string;

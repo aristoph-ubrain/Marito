@@ -4,23 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Anotacao, Titulo } from "@/components/ui";
 import { dois } from "@/lib/regras";
+import { PLANTA } from "@/lib/planta";
 import { aplicarAlas } from "./actions";
 
 type Situacao = "liberada" | "interditada";
 export type AlaConfig = { id: string; nome: string; sub: string; nivel: number; situacao: Situacao; secreta: boolean; pacientes: string };
 type Config = { nivel: number; situacao: Situacao };
 
-/** Cômodos da planta (os mesmos da tela do paciente): ala, nome, colunas de 6 e altura. */
-const COMODOS: { ala: string; nome: string; span: string; altura: number }[] = [
-  { ala: "P", nome: "CAPELA", span: "col-span-2", altura: 72 },
-  { ala: "C", nome: "ALA C", span: "col-span-4", altura: 72 },
-  { ala: "A", nome: "DORMITÓRIO", span: "col-span-3", altura: 72 },
-  { ala: "A", nome: "INTERNAÇÃO", span: "col-span-3", altura: 72 },
-  { ala: "K", nome: "CONSULTÓRIO", span: "col-span-3", altura: 64 },
-  { ala: "T", nome: "REFEITÓRIO", span: "col-span-3", altura: 64 },
-  { ala: "T", nome: "FARMÁCIA", span: "col-span-2", altura: 64 },
-  { ala: "T", nome: "RECEPÇÃO", span: "col-span-4", altura: 64 },
-];
+const COLUNAS = { 2: "col-span-2", 3: "col-span-3", 4: "col-span-4", 6: "col-span-6" } as const;
 const HACHURA = "repeating-linear-gradient(45deg,#e2d7bd 0 5px,#efe6d0 5px 10px)";
 
 export function ControleAlas({ alas }: { alas: AlaConfig[] }) {
@@ -41,14 +32,15 @@ export function ControleAlas({ alas }: { alas: AlaConfig[] }) {
     document.getElementById(`ala-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const comodo = (ala: string, rotulo: string, className: string, altura: number) => {
+  const comodo = (ala: string, className: string, altura: number) => {
     const a = porId[ala];
     if (!a) return null;
+    const rotulo = a.nome;
     const c = atual[ala];
     const fechada = c.situacao === "interditada";
     return (
-      <button key={rotulo} type="button" onClick={() => irPara(ala)}
-        aria-label={`${rotulo}: ${a.nome}, nível ${dois(c.nivel)}, ${fechada ? "interditada" : "liberada por nível"}, ${a.pacientes} pacientes. Ir para a configuração.`}
+      <button key={ala} type="button" onClick={() => irPara(ala)}
+        aria-label={`${rotulo}: nível ${dois(c.nivel)}, ${fechada ? "interditada" : "liberada por nível"}, ${a.pacientes} pacientes. Ir para a configuração.`}
         className={`flex flex-col items-center justify-center gap-0.5 border-[1.5px] border-tinta p-1 text-[10px] tracking-[.5px] ${className} ${foco === ala ? "outline outline-[3px] -outline-offset-[5px] outline-verde" : ""}`}
         style={{ minHeight: altura, background: fechada ? HACHURA : "var(--color-papel-claro)", borderStyle: a.secreta ? "dashed" : undefined, boxShadow: alterada(ala) ? "inset 0 -4px 0 var(--color-ocre)" : undefined }}>
         <b className="text-[11px]">{rotulo}</b>
@@ -68,27 +60,26 @@ export function ControleAlas({ alas }: { alas: AlaConfig[] }) {
   return (
     <>
       <section className="flex flex-col gap-1.5">
-        <Titulo>CONTROLE DE ACESSO ÀS ALAS</Titulo>
+        <Titulo>CONTROLE DE ACESSO ÀS ÁREAS</Titulo>
         <p className="m-0 text-xs leading-snug opacity-85">
-          Defina o nível mínimo para cada ala ou interdite o acesso. Alterações valem para todos os pacientes.
+          Defina o nível mínimo de cada área ou interdite o acesso. Alterações valem para todos os pacientes.
         </p>
       </section>
 
       <section className="-mx-2 flex flex-col gap-2 border-2 border-tinta bg-[#f4ecd8] p-2.5" aria-label="Planta do hospital">
         <div className="flex justify-between text-[11px] tracking-[.5px]"><span>PLANTA · VISÃO DA COORDENAÇÃO</span><span>N ↑</span></div>
         <div className="grid grid-cols-6 gap-1">
-          {COMODOS.map((m) => comodo(m.ala, m.nome, m.span, m.altura))}
+          {PLANTA.filter((c) => !c.abaixo).map((c) => comodo(c.id, COLUNAS[c.colunas], Math.round(c.altura * 0.75)))}
         </div>
         <div className="flex items-center gap-1.5">
           <div className="flex-1 border-t-[1.5px] border-dashed border-tinta" />
           <span className="text-[10px]">ESCADA DE SERVIÇO ↓</span>
           <div className="flex-1 border-t-[1.5px] border-dashed border-tinta" />
         </div>
-        <div className="grid grid-cols-1 gap-1">
-          {comodo("B", "SUBSOLO", "", 56)}
-          {comodo("X", "ALA ██", "", 44)}
+        <div className="grid grid-cols-6 gap-1">
+          {PLANTA.filter((c) => c.abaixo).map((c) => comodo(c.id, COLUNAS[c.colunas], Math.round(c.altura * 0.75)))}
         </div>
-        <span className="text-[10px] opacity-75">Toque num cômodo para ir à configuração da ala. Faixa ocre = alteração pendente.</span>
+        <span className="text-[10px] opacity-75">Toque numa área para ir à configuração dela. Faixa ocre = alteração pendente.</span>
       </section>
 
       <div className="flex flex-col gap-3">

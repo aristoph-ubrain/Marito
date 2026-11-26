@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Anotacao, Rodape, Titulo } from "@/components/ui";
 import { BONUS_PRIMEIRA_VISITA_ALA, dois } from "@/lib/regras";
+import { PLANTA } from "@/lib/planta";
 import { entrarNaAla } from "../actions";
+
+const COLUNAS = { 2: "col-span-2", 3: "col-span-3", 4: "col-span-4", 6: "col-span-6" } as const;
 
 export type AlaVista = {
   id: string;
@@ -47,15 +50,16 @@ export function PlantaAlas({
       router.refresh();
     });
 
-  /** Um cômodo da planta. Vários cômodos podem pertencer à mesma ala; tocar abre a ficha da ala. */
-  const sala = ({ id, rotulo, className = "", altura = 64, marcaAqui = true }: { id: string; rotulo: string; className?: string; altura?: number; marcaAqui?: boolean }) => {
+  /** Uma área na planta; tocar abre a ficha dela logo abaixo. */
+  const sala = ({ id, className = "", altura = 64 }: { id: string; className?: string; altura?: number }) => {
     const a = porId[id];
     if (!a) return null;
     const ok = aberta(a);
-    const aqui = marcaAqui && alaAtualId === id;
+    const aqui = alaAtualId === id;
+    const rotulo = nome(a);
     return (
-      <button key={rotulo} type="button" onClick={() => alternar(id)} aria-pressed={sel === id}
-        aria-label={`${rotulo}, ${nome(a)}, ${ok ? "liberada" : "restrita"}${aqui ? ", você está aqui" : ""}`}
+      <button key={id} type="button" onClick={() => alternar(id)} aria-pressed={sel === id}
+        aria-label={`${rotulo}, ${ok ? "liberada" : a.interditada ? "interditada" : "restrita"}${aqui ? ", você está aqui" : ""}`}
         className={`flex flex-col items-center justify-center gap-0.5 border-[1.5px] border-tinta p-1 text-[10px] tracking-[.5px] ${className} ${sel === id ? "outline outline-[3px] -outline-offset-[5px] outline-verde" : ""}`}
         style={{ minHeight: altura, background: ok ? "var(--color-papel-claro)" : HACHURA, color: ok ? undefined : "#6b5f4e", borderStyle: a.secreta ? "dashed" : undefined }}>
         <b className="text-xs">{rotulo}</b>
@@ -70,8 +74,8 @@ export function PlantaAlas({
       <section className="flex flex-col gap-2.5">
         <Titulo>V. ALAS — PLANTA DE ACESSO</Titulo>
         <p className="m-0 text-xs leading-snug opacity-85">
-          O acesso às alas é liberado conforme o nível do paciente. Áreas hachuradas permanecem restritas.
-          A primeira entrada em cada ala vale +{BONUS_PRIMEIRA_VISITA_ALA} XP.
+          O acesso a cada área é liberado conforme o nível do paciente. Áreas hachuradas permanecem restritas.
+          A primeira entrada em cada área vale +{BONUS_PRIMEIRA_VISITA_ALA} XP.
         </p>
         <div className="flex items-center justify-between border-2 border-tinta px-3 py-2.5">
           <span className="text-[13px]">NÍVEL DE ACESSO</span>
@@ -82,14 +86,7 @@ export function PlantaAlas({
       <section className="-mx-2 flex flex-col gap-2 border-2 border-tinta bg-[#f4ecd8] p-2.5">
         <div className="flex justify-between text-[11px] tracking-[.5px]"><span>PLANTA DE EVACUAÇÃO · BLOCO 1 · TÉRREO</span><span>N ↑</span></div>
         <div className="grid grid-cols-6 gap-1">
-          {sala({ id: "P", rotulo: "CAPELA", className: "col-span-2", altura: 96 })}
-          {sala({ id: "C", rotulo: "ALA C", className: "col-span-4", altura: 96 })}
-          {sala({ id: "A", rotulo: "DORMITÓRIO", className: "col-span-3", altura: 104 })}
-          {sala({ id: "A", rotulo: "INTERNAÇÃO", className: "col-span-3", altura: 104, marcaAqui: false })}
-          {sala({ id: "K", rotulo: "CONSULTÓRIO", className: "col-span-3", altura: 88 })}
-          {sala({ id: "T", rotulo: "REFEITÓRIO", className: "col-span-3", altura: 88, marcaAqui: false })}
-          {sala({ id: "T", rotulo: "FARMÁCIA", className: "col-span-2", altura: 84, marcaAqui: false })}
-          {sala({ id: "T", rotulo: "RECEPÇÃO", className: "col-span-4", altura: 84 })}
+          {PLANTA.filter((c) => !c.abaixo).map((c) => sala({ id: c.id, className: COLUNAS[c.colunas], altura: c.altura }))}
         </div>
         <div className="text-center text-[10px] tracking-[1px]">▲ ENTRADA PRINCIPAL</div>
         <div className="flex items-center gap-1.5">
@@ -97,9 +94,8 @@ export function PlantaAlas({
           <span className="text-[10px]">ESCADA DE SERVIÇO ↓</span>
           <div className="flex-1 border-t-[1.5px] border-dashed border-tinta" />
         </div>
-        <div className="grid grid-cols-1 gap-1">
-          {sala({ id: "B", rotulo: "SUBSOLO", altura: 72 })}
-          {porId.X && sala({ id: "X", rotulo: nome(porId.X), altura: 52 })}
+        <div className="grid grid-cols-6 gap-1">
+          {PLANTA.filter((c) => c.abaixo).map((c) => sala({ id: c.id, className: COLUNAS[c.colunas], altura: c.altura }))}
         </div>
         <div className="flex flex-wrap gap-3.5 text-[10px]">
           <span className="flex items-center gap-1"><span className="h-3 w-3 border-[1.5px] border-tinta bg-papel-claro" />liberada</span>
@@ -148,7 +144,7 @@ export function PlantaAlas({
                         <span className="btn cursor-default border-carimbo text-carimbo tracking-[1px]">● VOCÊ ESTÁ AQUI</span>
                       ) : (
                         <button type="button" className="btn btn-pri tracking-[1px]" disabled={ocupado} onClick={() => entrar(a)}>
-                          {ocupado ? "DESLOCANDO…" : visitada ? "IR PARA ESTA ALA" : `IR PARA ESTA ALA (+${BONUS_PRIMEIRA_VISITA_ALA} XP)`}
+                          {ocupado ? "DESLOCANDO…" : visitada ? "IR PARA ESTA ÁREA" : `IR PARA ESTA ÁREA (+${BONUS_PRIMEIRA_VISITA_ALA} XP)`}
                         </button>
                       )}
                       <Link href="/missoes" className="btn tracking-[1px]">VER MISSÕES →</Link>
@@ -158,7 +154,7 @@ export function PlantaAlas({
                       {a.secreta
                         ? "Este setor não existe. Solicitação registrada."
                         : a.interditada
-                          ? "Ala interditada pela coordenação."
+                          ? "Área interditada pela coordenação."
                           : `Acesso a partir do nível ${dois(a.nivel)}. Seu nível: ${dois(nivel)}.`}
                     </p>
                   )}

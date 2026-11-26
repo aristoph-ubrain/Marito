@@ -79,7 +79,7 @@ export function FormCadastro() {
           <span className="text-xs">Seu prontuário</span>
           <span className="font-maquina text-[40px] leading-none">Nº {prontuario}</span>
         </div>
-        <p className="m-0 text-sm leading-normal"><b>Paciente:</b> {d.nome}<br /><b>Leito:</b> Ala A · Quarto {quarto}</p>
+        <p className="m-0 text-sm leading-normal"><b>Paciente:</b> {d.nome}<br /><b>Leito:</b> Dormitório · Leito {quarto}</p>
         <Carimbo>CLASSE: ANÔMALO</Carimbo>
         <p className="m-0 text-xs opacity-85">Guarde este número. Ele será pedido em todo acesso ao sistema.</p>
         <Link href="/login" className="btn btn-pri min-h-[50px] text-[15px] tracking-[1.5px]">ACESSAR SISTEMA →</Link>

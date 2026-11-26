@@ -18,7 +18,7 @@ async function Planta() {
   return (
     <PlantaAlas
       nivel={p.nivel}
-      alaAtualId={alas.find((a) => a.nome === p.local)?.id ?? "A"}
+      alaAtualId={alas.find((a) => a.nome === p.local)?.id ?? "D"}
       visitadasIds={alas.filter((a) => p.alasVisitadas.includes(a.nome)).map((a) => a.id)}
       alas={alas.map((a) => ({
         id: a.id,
