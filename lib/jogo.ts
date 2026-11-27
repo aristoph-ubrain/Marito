@@ -15,7 +15,20 @@ import {
   PONTOS_POR_NIVEL,
 } from "./regras";
 import { CHAVES } from "./atributos";
+import { CHANCE_PAGINA } from "./diario-base";
+import { paginasPorArea } from "./diario";
 import { automacaoLiberada, chanceDobro, distribuirPorPlano, resumoDistribuicao, tetoOfflineMin } from "./habilidades";
+
+/** Dados de fora do paciente que as regras precisam (lidos uma vez por gravação). */
+export type Contexto = { paginasPorArea: Record<string, number[]> };
+let cacheContexto: { em: number; ctx: Contexto } | null = null;
+export async function contextoJogo(): Promise<Contexto> {
+  if (cacheContexto && Date.now() - cacheContexto.em < 60_000) return cacheContexto.ctx;
+  const ctx = { paginasPorArea: await paginasPorArea() };
+  cacheContexto = { em: Date.now(), ctx };
+  return ctx;
+}
+const SEM_CONTEXTO: Contexto = { paginasPorArea: {} };
 
 export type Mudanca = { set: Partial<Paciente>; historico?: NovoRegistro[]; depois?: () => Promise<void> };
 export type ResultadoMudanca = Mudanca | { erro: string } | null; // null = nada a mudar
@@ -26,14 +39,15 @@ export type ResultadoMudanca = Mudanca | { erro: string } | null; // null = nada
  */
 export async function mutarPaciente(
   prontuario: string,
-  calcular: (p: PacienteJogo, agora: Date) => ResultadoMudanca,
+  calcular: (p: PacienteJogo, agora: Date, ctx: Contexto) => ResultadoMudanca,
 ): Promise<{ ok: true; paciente: PacienteJogo } | { ok: false; erro: string }> {
   const col = await colecaoPacientes();
+  const ctx = await contextoJogo();
   for (let tentativa = 0; tentativa < 5; tentativa++) {
     const bruto = await col.findOne({ prontuario }, { projection: { _id: 0 } });
     if (!bruto) return { ok: false, erro: "Paciente não encontrado." };
     const p = normalizar(bruto);
-    const r = calcular(p, new Date());
+    const r = calcular(p, new Date(), ctx);
     if (r === null) return { ok: true, paciente: p };
     if ("erro" in r) return { ok: false, erro: r.erro };
 
@@ -76,7 +90,7 @@ const MAX_CONCLUSOES = 20000;
  * Pendências que dependem do tempo: missões que terminaram (inclusive com o jogo fechado),
  * automações das habilidades (repetir, fila, pontos), virada do dia e bônus de acesso diário.
  */
-export function calcularPendencias(p: PacienteJogo, agora: Date): ResultadoMudanca {
+export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto = SEM_CONTEXTO): ResultadoMudanca {
   const hoje = diaBrasilia(agora);
   let estado = { nivel: p.nivel, xp: p.xp, pontos: p.pontos, xpTotal: p.xpTotal };
   const set: Partial<Paciente> = {};
@@ -95,6 +109,8 @@ export function calcularPendencias(p: PacienteJogo, agora: Date): ResultadoMudan
   // Conclusões iguais no mesmo dia viram um lançamento só (com "vezes"), para não lotar o histórico.
   const grupos = new Map<string, NovoRegistro>();
   let acasos: NovoRegistro | null = null;
+  let paginas = p.paginas;
+  let paginaNova = p.paginaNova ?? null;
   let n = 0;
   while (em && missaoConcluida(new Date(em.inicio), em.duracao, agora) && n++ < MAX_CONCLUSOES) {
     const fim = new Date(new Date(em.inicio).getTime() + em.duracao * 1000);
@@ -121,6 +137,15 @@ export function calcularPendencias(p: PacienteJogo, agora: Date): ResultadoMudan
     }
     historico.push(...g.registros);
 
+    // Diário: 1% de chance de achar uma página ainda não encontrada da área da ordem.
+    const daArea = em.ala ? (ctx.paginasPorArea[em.ala] ?? []).filter((n) => !paginas.some((x) => x.n === n)) : [];
+    if (daArea.length && Math.random() < CHANCE_PAGINA) {
+      const n = daArea[Math.floor(Math.random() * daArea.length)];
+      paginas = [...paginas, { n, em: fim, area: em.ala! }];
+      paginaNova = n;
+      historico.push({ em: new Date(fim.getTime() + 2), tipo: "ac", codigo: `DI-${dois(n)}`, texto: `Página ${dois(n)} de um diário encontrada (${em.ala}).` });
+    }
+
     // Próxima: primeiro a fila, depois a repetição. Nada começa depois do teto offline.
     const podeAuto = fim.getTime() <= limiteAuto;
     if (podeAuto && auto.fila && automacaoLiberada("fila", atr) && fila.length) {
@@ -132,6 +157,7 @@ export function calcularPendencias(p: PacienteJogo, agora: Date): ResultadoMudan
     } else em = null;
   }
   if (n > 0) {
+    if (paginas !== p.paginas) Object.assign(set, { paginas, paginaNova });
     Object.assign(set, {
       emCurso: em,
       fila,

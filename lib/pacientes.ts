@@ -11,7 +11,8 @@ import { PONTOS_POR_NIVEL } from "./regras";
 const HASH_FALSO = bcrypt.hashSync("prontuario-inexistente", 10);
 
 export type Anotacao = { em: Date; autor: string; texto: string };
-export type EmCurso = { codigo: string; titulo: string; inicio: Date; duracao: number; xp: number };
+export type EmCurso = { codigo: string; titulo: string; inicio: Date; duracao: number; xp: number; ala?: string };
+export type PaginaAchada = { n: number; em: Date; area: string };
 /** Ordem na fila: duração e XP já com as habilidades aplicadas. */
 export type NaFila = Omit<EmCurso, "inicio">;
 
@@ -55,10 +56,12 @@ export type Paciente = {
   classeAnterior?: string; // carimbo riscado na ficha
   classeEm?: Date; // última reclassificação
   classeMotivo?: string;
+  paginas?: PaginaAchada[]; // páginas do diário encontradas
+  paginaNova?: number | null; // achada e ainda não lida (aviso no diário)
 };
 
 /** Paciente com todos os campos de jogo preenchidos. */
-type Opcionais = "recusou0112" | "aceitou0112" | "foto" | "avisosVistosEm" | "classeAnterior" | "classeEm" | "classeMotivo";
+type Opcionais = "recusou0112" | "aceitou0112" | "foto" | "avisosVistosEm" | "classeAnterior" | "classeEm" | "classeMotivo" | "paginaNova";
 export type PacienteJogo = Required<Omit<Paciente, Opcionais | "emCurso">> & Pick<Paciente, Opcionais> & { emCurso: EmCurso | null };
 
 export function normalizar(p: Paciente): PacienteJogo {
@@ -80,6 +83,7 @@ export function normalizar(p: Paciente): PacienteJogo {
     fila: p.fila ?? [],
     ultimaDistribuicao: p.ultimaDistribuicao ?? {},
     vistoEm: p.vistoEm ?? p.criadoEm,
+    paginas: p.paginas ?? [],
   };
 }
 

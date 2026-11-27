@@ -77,6 +77,10 @@ export default function TutorialPage() {
             por dia. Pode fechar o sistema: ao voltar, a XP já estará no seu prontuário.
           </p>
           <p className="m-0">Ordens em vermelho estão bloqueadas: falta nível ou a área ainda não foi liberada.</p>
+          <p className="m-0">
+            Às vezes, entre os papéis de uma ordem concluída, aparece uma <b>página de diário</b> de 1974. Cada área guarda páginas
+            diferentes. Junte as 12 na aba <b>DIÁRIO</b>.
+          </p>
         </Passo>
 
         <Passo n={4} titulo="NÍVEIS">

@@ -19,6 +19,7 @@
   --font-maquina: var(--font-special-elite), "Courier New", monospace;
   --font-mono: var(--font-courier-prime), "Courier New", monospace;
   --font-mao: var(--font-caveat), cursive;
+  --font-outra: var(--font-homemade-apple), cursive;
 }
 
 :root {

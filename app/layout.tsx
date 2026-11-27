@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, Courier_Prime, Special_Elite } from "next/font/google";
+import { Caveat, Courier_Prime, Homemade_Apple, Special_Elite } from "next/font/google";
 import "./globals.css";
 
 const specialElite = Special_Elite({
@@ -20,6 +20,13 @@ const caveat = Caveat({
   subsets: ["latin"],
 });
 
+// Caligrafia "de outra pessoa" no diário.
+const homemadeApple = Homemade_Apple({
+  variable: "--font-homemade-apple",
+  weight: "400",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Hospital Marito — Sistema de Registro e Avaliação de Pacientes",
   description: "RPG idle ambientado no Hospital de Saúde Mental Marito.",
@@ -35,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="pt-BR"
-      className={`${specialElite.variable} ${courierPrime.variable} ${caveat.variable} h-full antialiased`}
+      className={`${specialElite.variable} ${courierPrime.variable} ${caveat.variable} ${homemadeApple.variable} h-full antialiased`}
     >
       <head>
         {/* Extensões de modo escuro (ex.: Dark Reader) também respeitam este aviso. */}

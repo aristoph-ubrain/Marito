@@ -8,7 +8,7 @@ import { banco, umaVez } from "./db";
 import { buscarPaciente, colecaoPacientes } from "./pacientes";
 import { dataCurta, diaBrasilia, horaBrasilia } from "./regras";
 
-export type Aviso = { tipo: "convivio" | "chat" | "area" | "equipe" | "classe"; texto: string; detalhe?: string; href: string };
+export type Aviso = { tipo: "convivio" | "chat" | "area" | "equipe" | "classe" | "diario"; texto: string; detalhe?: string; href: string };
 export type Avisos = { desde: string; itens: Aviso[]; linha0317: string | null };
 
 async function colecaoAreas() {
@@ -40,6 +40,17 @@ export async function listarAvisos(eu: string): Promise<Avisos | null> {
       texto: `Reclassificação: ${p.classeAnterior ?? "—"} → ${p.classe}`,
       detalhe: p.classeMotivo ? `Motivo: ${p.classeMotivo}` : undefined,
       href: "/ficha",
+    });
+  }
+
+  // Diário: páginas achadas nas missões.
+  const achadas = p.paginas.filter((x) => new Date(x.em) > desde);
+  if (achadas.length) {
+    itens.push({
+      tipo: "diario",
+      texto: plural(achadas.length, "página do diário encontrada", "páginas do diário encontradas"),
+      detalhe: achadas.map((x) => `Pág. ${String(x.n).padStart(2, "0")} · ${x.area}`).join(" · "),
+      href: "/diario",
     });
   }
 

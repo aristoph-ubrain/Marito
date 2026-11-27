@@ -102,6 +102,7 @@ function podeFazer(ordem: Ordem, ala: Awaited<ReturnType<typeof listarAlas>>[num
 /** A ordem como entra em curso ou na fila: duração e XP com as habilidades do paciente. */
 const comHabilidades = (ordem: Ordem, p: Pick<PacienteJogo, "atributos">) => ({
   codigo: ordem.codigo,
+  ala: ordem.ala,
   titulo: ordem.titulo,
   duracao: duracaoComHabilidade(ordem.duracao, p.atributos),
   xp: xpComHabilidade(ordem.xp, ordem.duracao, p.atributos),
@@ -122,9 +123,9 @@ export async function iniciarMissao(codigo: string): Promise<Resposta> {
   if (!achada) return { ok: false, erro: "Esta ordem não está mais disponível." };
   const { ordem, ala } = achada;
 
-  const r = await mutarPaciente(prontuario, (p, agora) => {
+  const r = await mutarPaciente(prontuario, (p, agora, ctx) => {
     // Aplica primeiro o que estiver pendente (missão anterior terminada, virada do dia).
-    const pend = calcularPendencias(p, agora);
+    const pend = calcularPendencias(p, agora, ctx);
     const ok = pend && !("erro" in pend) ? pend : null;
     const atual = ok ? { ...p, ...ok.set } : p;
 
@@ -152,9 +153,9 @@ export async function enfileirarMissao(codigo: string): Promise<Resposta> {
   if (!achada) return { ok: false, erro: "Esta ordem não está mais disponível." };
   const { ordem, ala } = achada;
   let comecar = false;
-  const r = await mutarPaciente(prontuario, (p, agora) => {
+  const r = await mutarPaciente(prontuario, (p, agora, ctx) => {
     comecar = false;
-    const pend = calcularPendencias(p, agora);
+    const pend = calcularPendencias(p, agora, ctx);
     const ok = pend && !("erro" in pend) ? pend : null;
     const atual = ok ? { ...p, ...ok.set } : p;
     if (!automacaoLiberada("fila", atual.atributos)) return { erro: "A fila de ordens abre com Vitalidade 10." };
@@ -190,10 +191,10 @@ export async function removerDaFila(indice: number): Promise<Resposta> {
 export async function interromperMissao(): Promise<Resposta> {
   const prontuario = await prontuarioDaSessao();
   if (!prontuario) return SEM_SESSAO;
-  const r = await mutarPaciente(prontuario, (p, agora) => {
+  const r = await mutarPaciente(prontuario, (p, agora, ctx) => {
     if (!p.emCurso) return null;
     // Se já terminou, conclui em vez de interromper.
-    const pend = calcularPendencias(p, agora);
+    const pend = calcularPendencias(p, agora, ctx);
     if (pend && !("erro" in pend) && pend.set.emCurso !== undefined) return { ...pend, set: { ...pend.set, emCurso: null } };
     // Com a fila ligada, a próxima ordem começa no lugar da interrompida.
     if (p.automacoes.fila && automacaoLiberada("fila", p.atributos) && p.fila.length) {
@@ -212,8 +213,8 @@ export async function sincronizar(): Promise<Resposta & { restanteMs?: number }>
   const prontuario = await prontuarioDaSessao();
   if (!prontuario) return SEM_SESSAO;
   let mudou = false;
-  const r = await mutarPaciente(prontuario, (p, agora) => {
-    const pend = calcularPendencias(p, agora);
+  const r = await mutarPaciente(prontuario, (p, agora, ctx) => {
+    const pend = calcularPendencias(p, agora, ctx);
     mudou = !!pend && !("erro" in pend) && pend.set.emCurso !== undefined;
     return pend;
   });
@@ -435,4 +436,15 @@ export async function escolherPlano(plano: Plano): Promise<Resposta> {
   if (!r.ok) return { ok: false, erro: r.erro };
   revalidatePath("/", "layout");
   return { ok: true, msg: "Plano registrado." };
+}
+
+/* ---------- Diário ---------- */
+
+/** O paciente abriu a página nova: some o aviso do diário. */
+export async function lerPaginaNova(): Promise<Resposta> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return SEM_SESSAO;
+  await (await colecaoPacientes()).updateOne({ prontuario, paginaNova: { $ne: null } }, { $set: { paginaNova: null } });
+  revalidatePath("/diario");
+  return { ok: true };
 }

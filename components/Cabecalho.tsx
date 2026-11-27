@@ -11,6 +11,7 @@ const LINKS_PACIENTE = [
   { href: "/convivio", rotulo: "CONVÍVIO" },
   { href: "/chat", rotulo: "CHAT" },
   { href: "/historico", rotulo: "HISTÓRICO" },
+  { href: "/diario", rotulo: "DIÁRIO" },
 ];
 
 export function CabecalhoPaciente() {

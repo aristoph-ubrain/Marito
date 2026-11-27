@@ -13,6 +13,7 @@ const ETIQUETA: Record<Aviso["tipo"], { rotulo: string; cor: string; acao: strin
   area: { rotulo: "ÁREAS", cor: "var(--color-ocre)", acao: "PLANTA" },
   equipe: { rotulo: "EQUIPE", cor: "var(--color-carimbo)", acao: "VER" },
   classe: { rotulo: "CLASSIFICAÇÃO", cor: "var(--color-carimbo)", acao: "FICHA" },
+  diario: { rotulo: "DIÁRIO", cor: "var(--color-caneta)", acao: "LER" },
 };
 
 /** Botão AVISOS no cabeçalho (todas as telas do paciente) e a folha "Enquanto você esteve fora". Atualiza sozinho. */
