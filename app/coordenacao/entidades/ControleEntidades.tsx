@@ -44,7 +44,7 @@ export function ControleEntidades({
       <section className="flex flex-col gap-2">
         <Titulo>LUA NEGRA · ENTREGAR</Titulo>
         <p className="m-0 text-xs leading-snug opacity-85">
-          Além dos 10% por ordem concluída, a coordenação pode deixar Luas Negras para um paciente. Ele recebe um aviso: “uma lua foi deixada no
+          Além de 1% por ordem concluída, a coordenação pode deixar Luas Negras para um paciente. Ele recebe um aviso: “uma lua foi deixada no
           seu leito”.
         </p>
         <div className="flex flex-col gap-2 border-[1.5px] border-tinta p-2.5">

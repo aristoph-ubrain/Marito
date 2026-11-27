@@ -7,7 +7,7 @@ export type Raridade = "comum" | "incomum" | "rara" | "lendaria";
 export type Entidade = { id: string; nome: string; raridade: Raridade; descricao: string };
 
 /** Chance de achar uma Lua Negra ao concluir uma ordem (qualquer área). */
-export const CHANCE_LUA = 0.1;
+export const CHANCE_LUA = 0.01;
 /** Máximo de luas que o Mestre deixa de uma vez. */
 export const MAX_LUAS_ENTREGA = 5;
 export const LIMITE_NOME_ENTIDADE = 32;

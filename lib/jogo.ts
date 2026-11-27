@@ -156,7 +156,7 @@ export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto =
       historico.push({ em: new Date(fim.getTime() + 2), tipo: "ac", codigo: `DI-${dois(n)}`, texto: `Página ${dois(n)} de um diário encontrada (${em.ala}).` });
     }
 
-    // Lua Negra: 10% por ordem concluída, em qualquer área. Agrupada por dia no histórico.
+    // Lua Negra: 1% por ordem concluída, em qualquer área. Agrupada por dia no histórico.
     if (Math.random() < CHANCE_LUA) {
       luas += 1;
       luasNovas += 1;

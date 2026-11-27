@@ -82,7 +82,7 @@ export default function TutorialPage() {
             diferentes. Junte as 12 na aba <b>DIÁRIO</b>.
           </p>
           <p className="m-0">
-            Em uma a cada dez ordens fica para trás uma <b>Lua Negra</b>. Queime-a na aba <b>ENTIDADES</b> para invocar uma entidade e
+            Raramente (1 em cada 100 ordens) fica para trás uma <b>Lua Negra</b>. Queime-a na aba <b>ENTIDADES</b> para invocar uma entidade e
             escolha qual acompanha a sua ficha. São só coleção: não mudam XP nem missões.
           </p>
         </Passo>
