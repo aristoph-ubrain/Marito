@@ -70,12 +70,12 @@ export function Convivio({
     return (
       <>
         <button type="button" className="btn self-start" onClick={() => setAberto(null)}>← VOLTAR AO CONVÍVIO</button>
-        <div className="flex items-end justify-between border-b border-tinta pb-2">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] tracking-[1px]">FICHA DE OUTRO PACIENTE · CONSULTA</span>
+        <div className="flex flex-col gap-1 border-b border-tinta pb-2">
+          <span className="text-[11px] tracking-[1px]">FICHA DE OUTRO PACIENTE · CONSULTA</span>
+          <div className="flex flex-wrap items-end justify-between gap-x-3">
             <span className="font-maquina text-[26px] leading-none">Nº {c.prontuario}</span>
+            <span className="text-[11px] whitespace-nowrap">{c.ala}</span>
           </div>
-          <span className="text-[11px]">{c.ala}</span>
         </div>
         <section className="flex items-start gap-3.5">
           <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm leading-snug">
@@ -83,12 +83,9 @@ export function Convivio({
             <div><b>Classificação:</b> <span className="font-maquina tracking-[1px]" style={{ color: c.classeCor }}>{c.classe}</span></div>
             <div><b>Nível:</b> {c.nivel}</div>
             <div><b>Situação:</b> {c.situacao}</div>
-            {c.acompanhante && (
-              <div className="flex items-center gap-1.5"><b>Acompanhado por:</b> <DesenhoEntidade id={c.acompanhante.id} tamanho={24} /> {c.acompanhante.nome} <span className="font-maquina">×{c.acompanhante.vezes}</span></div>
-            )}
           </div>
           <div className="relative flex-none">
-            {c.foto ? <Figurinha opcao={c.foto} prontuario={c.prontuario} largura={104} giro={-2} prefixo={`col${c.prontuario}`} classe={c.classe} corClasse={c.classeCor} /> : <Foto3x4 largura={90} giro={-2} />}
+            {c.foto ? <Figurinha opcao={c.foto} prontuario={c.prontuario} largura={96} giro={-2} prefixo={`col${c.prontuario}`} classe={c.classe} corClasse={c.classeCor} /> : <Foto3x4 largura={90} giro={-2} />}
             {c.acompanhante && (
               <span className="absolute -bottom-3 -left-4 flex items-center gap-0.5" title={`${c.acompanhante.nome} ×${c.acompanhante.vezes}`}>
                 <span className="flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-tinta bg-[#f4efe2] shadow-[0_2px_5px_rgba(0,0,0,.35)]">
@@ -99,6 +96,18 @@ export function Convivio({
             )}
           </div>
         </section>
+        {c.acompanhante && (
+          <div className="mt-1 flex items-center gap-2.5 border-[1.5px] border-tinta bg-papel-claro px-2.5 py-2 text-sm leading-snug">
+            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full border border-tinta bg-[#f4efe2]">
+              <DesenhoEntidade id={c.acompanhante.id} tamanho={32} />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="text-[10px] tracking-[1px]">ACOMPANHADO POR</span>
+              <b className="font-maquina font-normal">{c.acompanhante.nome}</b>
+            </span>
+            <span className="flex-none font-maquina text-base">×{c.acompanhante.vezes}</span>
+          </div>
+        )}
         <section className="flex flex-col gap-2">
           <Titulo>ATRIBUTOS</Titulo>
           <GradeAtributos itens={ATRIBUTOS.map((a, i) => ({ sigla: a.sigla, valor: c.atributos[i] ?? 0 }))} />
