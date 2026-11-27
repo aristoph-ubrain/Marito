@@ -85,11 +85,21 @@ export function Convivio({
             <div><b>Nível:</b> {c.nivel}</div>
             <div><b>Situação:</b> {c.situacao}</div>
             {c.acompanhante && (
-              <div className="flex items-center gap-1.5"><b>Acompanhado por:</b> <DesenhoEntidade id={c.acompanhante.id} tamanho={24} /> {c.acompanhante.nome}</div>
+              <div className="flex items-center gap-1.5"><b>Acompanhado por:</b> <DesenhoEntidade id={c.acompanhante.id} tamanho={24} /> {c.acompanhante.nome} <span className="font-maquina">×{c.acompanhante.vezes}</span></div>
             )}
             <div className="text-[11px] opacity-75">Entidades: {c.prontuario === "0112" ? "██" : String(c.entidades).padStart(2, "0")} / {String(ENTIDADES_ORIGINAIS.length).padStart(2, "0")}</div>
           </div>
-          {c.foto ? <Figurinha opcao={c.foto} prontuario={c.prontuario} largura={104} giro={-2} prefixo={`col${c.prontuario}`} classe={c.classe} corClasse={c.classeCor} /> : <Foto3x4 largura={90} giro={-2} />}
+          <div className="relative flex-none">
+            {c.foto ? <Figurinha opcao={c.foto} prontuario={c.prontuario} largura={104} giro={-2} prefixo={`col${c.prontuario}`} classe={c.classe} corClasse={c.classeCor} /> : <Foto3x4 largura={90} giro={-2} />}
+            {c.acompanhante && (
+              <span className="absolute -bottom-3 -left-4 flex items-center gap-0.5" title={`${c.acompanhante.nome} ×${c.acompanhante.vezes}`}>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full border-[1.5px] border-tinta bg-[#f4efe2] shadow-[0_2px_5px_rgba(0,0,0,.35)]">
+                  <DesenhoEntidade id={c.acompanhante.id} tamanho={36} />
+                </span>
+                <b className="rounded-sm bg-tinta px-1 font-maquina text-[11px] font-normal text-papel">×{c.acompanhante.vezes}</b>
+              </span>
+            )}
+          </div>
         </section>
         <section className="flex flex-col gap-2">
           <Titulo>ATRIBUTOS</Titulo>

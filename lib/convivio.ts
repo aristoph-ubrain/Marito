@@ -21,7 +21,7 @@ export type Colega = {
   atributos: (number | "?")[];
   classe: string;
   classeCor: string; // cor do carimbo da classe
-  acompanhante: { id: string; nome: string } | null; // entidade que acompanha a ficha
+  acompanhante: { id: string; nome: string; vezes: number } | null; // entidade que acompanha a ficha (vezes = quantas tem)
   entidades: number; // quantas entidades diferentes já invocou
   foto?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 };
@@ -75,7 +75,7 @@ export async function listarConvivio(eu: string) {
       atributos: Object.values(p.atributos),
       classe: p.classe,
       classeCor: cores.get(p.classe) ?? "var(--color-tinta)",
-      acompanhante: p.acompanhante && p.entidades[p.acompanhante] ? { id: p.acompanhante, nome: nomesEnt.get(p.acompanhante) ?? "" } : null,
+      acompanhante: p.acompanhante && p.entidades[p.acompanhante] ? { id: p.acompanhante, nome: nomesEnt.get(p.acompanhante) ?? "", vezes: p.entidades[p.acompanhante] } : null,
       entidades: Object.keys(p.entidades).length,
       foto: p.foto,
     };
