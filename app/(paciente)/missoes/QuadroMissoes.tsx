@@ -6,7 +6,7 @@ import { Anotacao, BarraXp, Rodape, Titulo } from "@/components/ui";
 import type { Missao } from "@/lib/atributos";
 import { dois, duracaoTexto, milhar, mmss, PONTOS_POR_NIVEL, xpParaProximoNivel } from "@/lib/regras";
 import { duracaoComHabilidade, resumoHabilidades, TAMANHO_FILA, xpComHabilidade, type Valores } from "@/lib/habilidades";
-import { enfileirarMissao, iniciarMissao, interromperMissao, lerPaginaNova, removerDaFila, sincronizar } from "../actions";
+import { alternarAutomacao, enfileirarMissao, iniciarMissao, interromperMissao, lerPaginaNova, removerDaFila, sincronizar } from "../actions";
 import Link from "next/link";
 import { semMarcas } from "@/lib/diario-base";
 import { FolhaAberta } from "../diario/DiarioEncontrado";
@@ -34,6 +34,7 @@ export function QuadroMissoes({
   atributos,
   filaAtiva,
   repetirAtivo,
+  repetirLiberado,
   fila,
   paginaNova,
   luas,
@@ -50,6 +51,7 @@ export function QuadroMissoes({
   atributos: Valores;
   filaAtiva: boolean;
   repetirAtivo: boolean;
+  repetirLiberado: boolean;
   fila: { codigo: string; titulo: string }[];
   paginaNova: PaginaNova | null;
   luas: number;
@@ -87,6 +89,12 @@ export function QuadroMissoes({
     setLuasAntes(luas);
     if (luas > luasAntes) setLuaNova({ chave: luas, n: luas - luasAntes });
   }
+
+  // Ao abrir a tela (inclusive pelo "voltar" do navegador), busca o estado atual:
+  // o cache do navegador pode trazer uma versão antiga (ex.: repetir ligado em outra tela).
+  useEffect(() => {
+    router.refresh();
+  }, [router]);
 
   // Diferença entre o relógio do aparelho e o do servidor (corrige celulares com hora errada).
   const [desvio] = useState(() => agoraServidor - Date.now());
@@ -188,9 +196,17 @@ export function QuadroMissoes({
             <span>MISSÕES HOJE: <b>{feitasHoje}</b></span>
             <span>Reinicia à meia-noite</span>
           </div>
-          <div className="flex flex-wrap justify-between gap-x-3 border-t border-dashed border-tinta pt-1.5 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-dashed border-tinta pt-1.5 text-xs">
             <span>Habilidades: <b>{hab.duracao}</b> duração · <b>{hab.xp.split(" ")[0]}</b> XP</span>
-            <span>Repetir: <b>{repetirAtivo ? "LIGADO" : "DESLIGADO"}</b></span>
+            {repetirLiberado ? (
+              <button type="button" aria-pressed={repetirAtivo} disabled={ocupado}
+                onClick={() => executar(() => alternarAutomacao("repetir", !repetirAtivo))}
+                className={`btn min-h-8 px-2 text-[11px] tracking-[.5px] ${repetirAtivo ? "btn-escuro" : ""}`}>
+                REPETIR: {repetirAtivo ? "LIGADO" : "DESLIGADO"}
+              </button>
+            ) : (
+              <span className="opacity-70">Repetir: abre com AGI 10</span>
+            )}
           </div>
         </div>
         {achado && (

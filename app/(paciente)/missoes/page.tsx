@@ -35,6 +35,7 @@ async function Quadro() {
       atributos={p.atributos}
       filaAtiva={!!p.automacoes.fila && automacaoLiberada("fila", p.atributos)}
       repetirAtivo={!!p.automacoes.repetir && automacaoLiberada("repetir", p.atributos)}
+      repetirLiberado={automacaoLiberada("repetir", p.atributos)}
       fila={p.fila.map((f) => ({ codigo: f.codigo, titulo: f.titulo }))}
       paginaNova={pagina}
       luas={p.luas}
