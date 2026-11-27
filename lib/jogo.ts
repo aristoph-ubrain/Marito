@@ -48,9 +48,14 @@ export async function mutarPaciente(
     const bruto = await col.findOne({ prontuario }, { projection: { _id: 0 } });
     if (!bruto) return { ok: false, erro: "Paciente não encontrado." };
     const p = normalizar(bruto);
-    const r = calcular(p, new Date(), ctx);
+    const agora = new Date();
+    let r = calcular(p, agora, ctx);
+    if (r && "erro" in r) return { ok: false, erro: r.erro };
+    // Distribuição automática (CON 10): vale para qualquer gravação que deixe pontos parados
+    // (subida de nível na missão, na primeira visita a uma área, no bônus diário…).
+    const dist = distribuicaoAutomatica(p, r?.set ?? {}, agora);
+    if (dist) r = { ...r, set: { ...r?.set, ...dist.set }, historico: [...(r?.historico ?? []), dist.registro] };
     if (r === null) return { ok: true, paciente: p };
-    if ("erro" in r) return { ok: false, erro: r.erro };
 
     const filtro = bruto.versao === undefined ? { prontuario, versao: { $exists: false } } : { prontuario, versao: bruto.versao };
     const res = await col.updateOne(filtro, { $set: { ...r.set, versao: p.versao + 1 } });
@@ -194,16 +199,6 @@ export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto =
     set.bonusDia = hoje;
   }
 
-  // Distribuição automática dos pontos (CON 10).
-  if (estado.pontos > 0 && auto.pontos && automacaoLiberada("pontos", atr)) {
-    const add = distribuirPorPlano(estado.pontos, atr, auto.plano, p.ultimaDistribuicao);
-    const atributos = { ...atr };
-    for (const c of CHAVES) atributos[c] += add[c] ?? 0;
-    set.atributos = atributos;
-    estado = { ...estado, pontos: 0 };
-    historico.push({ em: new Date(agora.getTime() + 2), tipo: "ev", codigo: "EV-AV", texto: `Avaliação automática: ${resumoDistribuicao(add)}.` });
-  }
-
   if (agora.getTime() - new Date(p.vistoEm).getTime() > VISTO_A_CADA_MS) set.vistoEm = agora;
 
   if (!Object.keys(set).length) return null;
@@ -219,6 +214,19 @@ export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto =
             .bulkWrite(ordens.map(([codigo, vezes]) => ({ updateOne: { filter: { codigo }, update: { $inc: { vezes } } } })));
         }
       : undefined,
+  };
+}
+
+/** Se a distribuição automática estiver ligada e liberada, reparte os pontos parados pelo plano. */
+function distribuicaoAutomatica(p: PacienteJogo, set: Partial<Paciente>, agora: Date): { set: Partial<Paciente>; registro: NovoRegistro } | null {
+  const atual = { ...p, ...set } as PacienteJogo;
+  if (atual.pontos <= 0 || !atual.automacoes?.pontos || !automacaoLiberada("pontos", atual.atributos)) return null;
+  const add = distribuirPorPlano(atual.pontos, atual.atributos, atual.automacoes.plano, atual.ultimaDistribuicao ?? {});
+  const atributos = { ...atual.atributos };
+  for (const c of CHAVES) atributos[c] += add[c] ?? 0;
+  return {
+    set: { atributos, pontos: 0 },
+    registro: { em: new Date(agora.getTime() + 2), tipo: "ev", codigo: "EV-AV", texto: `Avaliação automática: ${resumoDistribuicao(add)}.` },
   };
 }
 
