@@ -171,6 +171,28 @@ export function ColecaoEntidades({ lista, luas, acompanhante }: { lista: Entidad
         </div>
       )}
 
+
+      {(() => {
+        const atual = lista.find((e): e is Extract<EntidadeVista, { tem: true }> => e.tem && e.id === acompanhante);
+        return (
+          <section aria-label="Acompanhante atual"
+            className={`relative flex items-center gap-3 border-2 p-3 ${atual ? "border-verde bg-verde/[.07]" : "border-dashed border-tinta"}`}>
+            <span className={`flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full border-2 bg-[#f4efe2] ${atual ? "border-verde" : "border-dashed border-tinta"}`}>
+              <DesenhoEntidade id={atual?.id} tamanho={60} />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="text-[10px] tracking-[1.5px] text-verde">{atual ? "ESTÁ TE SEGUINDO" : "NINGUÉM TE SEGUE"}</span>
+              <b className="font-maquina text-[17px] font-normal leading-tight">{atual ? atual.nome : "Nenhuma entidade"}</b>
+              <span className="text-[11px] leading-snug opacity-80">
+                {atual ? `${RARIDADES[atual.raridade].rotulo} · ×${atual.vezes} · aparece na sua ficha e no convívio` : "Toque numa entidade da coleção para ela te seguir."}
+              </span>
+            </span>
+            {atual && (
+              <button type="button" className="btn min-h-9 self-start px-2 text-[11px]" disabled={ocupado} onClick={() => acompanhar(null)}>DISPENSAR</button>
+            )}
+          </section>
+        );
+      })()}
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
           <span className="text-xs tracking-[.5px]"><b>COLEÇÃO</b></span>
@@ -182,7 +204,10 @@ export function ColecaoEntidades({ lista, luas, acompanhante }: { lista: Entidad
               <button key={e.id} type="button" aria-pressed={acompanhante === e.id} disabled={ocupado}
                 aria-label={`${e.nome}, ${RARIDADES[e.raridade].rotulo}${acompanhante === e.id ? ", acompanhando" : ""}`}
                 onClick={() => acompanhar(acompanhante === e.id ? null : e.id)}
-                className={`relative flex min-h-[118px] cursor-pointer flex-col items-center gap-1 border-[1.5px] border-tinta bg-papel-claro px-1 pt-1.5 pb-1 text-center font-mono text-[10px] leading-tight text-tinta ${acompanhante === e.id ? "outline-[3px] outline-offset-1 outline-verde outline-solid" : ""}`}>
+                className={`relative flex min-h-[118px] cursor-pointer flex-col items-center gap-1 border-[1.5px] border-tinta bg-papel-claro px-1 pt-1.5 pb-1 text-center font-mono text-[10px] leading-tight text-tinta ${acompanhante === e.id ? "border-verde bg-verde/[.12] outline-[3px] outline-offset-1 outline-verde outline-solid" : ""}`}>
+                {acompanhante === e.id && (
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-verde px-1.5 text-[8.5px] tracking-[1px] whitespace-nowrap text-papel">TE SEGUE</span>
+                )}
                 {e.vezes > 1 && <span className="absolute top-0.5 right-1 text-[9px]">×{e.vezes}</span>}
                 <DesenhoEntidade id={e.id} tamanho={52} />
                 <span>{e.nome}</span>
@@ -198,7 +223,7 @@ export function ColecaoEntidades({ lista, luas, acompanhante }: { lista: Entidad
           )}
         </div>
         <p className="m-0 text-[11px] leading-snug opacity-75">
-          Toque numa entidade para ela acompanhar a sua ficha (toque de novo para dispensar). Repetidas viram ecos (×2, ×3): só contam.
+          Toque numa entidade para ela te seguir (toque de novo para dispensar). Repetidas viram ecos (×2, ×3): só contam.
           Entidades são coleção: não mudam XP nem missões. Chances: comum 60% · incomum 28% · rara 10% · lendária 2%.
         </p>
       </section>
