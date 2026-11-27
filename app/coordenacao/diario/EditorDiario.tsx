@@ -54,8 +54,9 @@ export function EditorDiario({
       <section className="flex flex-col gap-2">
         <Titulo>DIÁRIO DA ENFERMEIRA C.</Titulo>
         <p className="m-0 text-xs leading-snug opacity-85">
-          Texto das 12 páginas e da última entrada. Os pacientes acham as páginas ao concluir ordens ({CHANCE_PAGINA * 100}% de chance por
-          ordem, na área da página). Editar aqui muda o texto para todos, inclusive quem já achou.
+          Texto das 12 páginas e da última entrada. As páginas saem em ordem: cada paciente só pode achar a próxima que falta, ao concluir
+          uma ordem da área dela ({CHANCE_PAGINA * 100}% de chance). Uma área sem ordens publicadas (ou interditada) trava o diário nessa página.
+          Editar aqui muda o texto para todos, inclusive quem já achou.
         </p>
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 border-[1.5px] border-tinta px-2.5 py-2 text-xs">
           <span>Pacientes com páginas: <b>{dois(comPaginas)}</b></span>

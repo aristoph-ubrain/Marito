@@ -38,6 +38,12 @@ export const PAGINAS_ORIGINAIS: Pagina[] = [
   { n: 13, data: "██/██/1998", area: "QUARTO 112", outra: true, texto: "O quarto 112 ficou vazio em 1998. Eu não.\nObrigada por juntar as páginas. Agora tenho o que me faltava: alguém que leia.\n— C." },
 ];
 
+/** A próxima página que pode ser achada: a primeira que falta (as páginas saem em ordem). */
+export function proximaPagina(tem: number[]): number | null {
+  for (let n = 1; n <= TOTAL_PAGINAS; n++) if (!tem.includes(n)) return n;
+  return null;
+}
+
 export const ehNumeroPagina = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= ULTIMA;
 
 /** Divide o texto em trechos normais e tarjados, para desenhar a tarja preta. */

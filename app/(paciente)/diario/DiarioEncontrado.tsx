@@ -62,10 +62,10 @@ export function DiarioEncontrado({ paginas, achadas, nova }: { paginas: PaginaVi
           const rotulo = fim ? "✕" : dois(p.n);
           if (!p.aberta)
             return (
-              <div key={p.n} aria-label={fim ? "Última entrada lacrada" : `Página ${p.n} não encontrada. Dica: ${p.dica}`}
-                className={`flex aspect-[3/4] flex-col justify-between border-[1.5px] border-dashed p-1.5 opacity-70 ${fim ? "border-carimbo text-carimbo" : "border-tinta"}`}>
+              <div key={p.n} aria-label={fim ? "Última entrada lacrada" : p.dica ? `Próxima página, ${p.n}. Está em: ${p.dica}` : `Página ${p.n} não encontrada`}
+                className={`flex aspect-[3/4] flex-col justify-between border-[1.5px] border-dashed p-1.5 ${p.dica && !fim ? "border-verde text-verde opacity-90" : "opacity-55"} ${fim ? "border-carimbo text-carimbo" : p.dica ? "" : "border-tinta"}`}>
                 <span className="font-maquina text-lg leading-none">{rotulo}</span>
-                <span className="text-[9px] leading-tight tracking-[.5px]">{fim ? "LACRADA" : `? ${p.dica}`}</span>
+                <span className="text-[9px] leading-tight tracking-[.5px]">{fim ? "LACRADA" : p.dica ? `PRÓXIMA · ${p.dica}` : "?"}</span>
               </div>
             );
           return (
@@ -80,8 +80,8 @@ export function DiarioEncontrado({ paginas, achadas, nova }: { paginas: PaginaVi
         })}
       </div>
       <p className="m-0 text-[11px] leading-snug opacity-75">
-        Toque numa página para lê-la. Página tracejada: ainda não encontrada; a dica mostra a área onde ela está.
-        Cada ordem concluída tem 1% de chance de revelar uma página da área dela.
+        Toque numa página para lê-la. As páginas aparecem em ordem: só a próxima (em verde) pode ser achada, e só numa ordem da área
+        indicada, com 1% de chance a cada conclusão.
       </p>
       {achadas < TOTAL_PAGINAS && (
         <p className="m-0 border-[1.5px] border-dashed border-carimbo px-3 py-2.5 text-xs leading-snug text-carimbo">

@@ -15,7 +15,7 @@ import {
   PONTOS_POR_NIVEL,
 } from "./regras";
 import { CHAVES } from "./atributos";
-import { CHANCE_PAGINA } from "./diario-base";
+import { CHANCE_PAGINA, proximaPagina } from "./diario-base";
 import { paginasPorArea } from "./diario";
 import { automacaoLiberada, chanceDobro, distribuirPorPlano, resumoDistribuicao, tetoOfflineMin } from "./habilidades";
 
@@ -137,10 +137,10 @@ export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto =
     }
     historico.push(...g.registros);
 
-    // Diário: 1% de chance de achar uma página ainda não encontrada da área da ordem.
-    const daArea = em.ala ? (ctx.paginasPorArea[em.ala] ?? []).filter((n) => !paginas.some((x) => x.n === n)) : [];
-    if (daArea.length && Math.random() < CHANCE_PAGINA) {
-      const n = daArea[Math.floor(Math.random() * daArea.length)];
+    // Diário, em ordem: só a próxima página que falta pode ser achada, e só numa ordem da área dela (1% de chance).
+    const proxima = proximaPagina(paginas.map((x) => x.n));
+    if (proxima && em.ala && (ctx.paginasPorArea[em.ala] ?? []).includes(proxima) && Math.random() < CHANCE_PAGINA) {
+      const n = proxima;
       paginas = [...paginas, { n, em: fim, area: em.ala! }];
       paginaNova = n;
       historico.push({ em: new Date(fim.getTime() + 2), tipo: "ac", codigo: `DI-${dois(n)}`, texto: `Página ${dois(n)} de um diário encontrada (${em.ala}).` });
