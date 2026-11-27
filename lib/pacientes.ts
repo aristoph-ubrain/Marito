@@ -4,6 +4,7 @@ import { MongoServerError } from "mongodb";
 import { ATRIBUTO_INICIAL, ATRIBUTOS_REMOVIDOS, atributosIniciais, atributosZerados, CHAVES, type ChaveAtributo } from "./atributos";
 import { banco, umaVez } from "./db";
 import { nomeClassePadrao } from "./classes";
+import { PAGINA_INICIAL } from "./diario-base";
 import type { Automacoes } from "./habilidades";
 import { registrar } from "./historico";
 import { PONTOS_POR_NIVEL } from "./regras";
@@ -83,7 +84,10 @@ export function normalizar(p: Paciente): PacienteJogo {
     fila: p.fila ?? [],
     ultimaDistribuicao: p.ultimaDistribuicao ?? {},
     vistoEm: p.vistoEm ?? p.criadoEm,
-    paginas: p.paginas ?? [],
+    // Todo paciente começa com a página 1 do diário (também gravada na internação e na migração).
+    paginas: p.paginas?.some((x) => x.n === PAGINA_INICIAL)
+      ? p.paginas
+      : [{ n: PAGINA_INICIAL, em: p.criadoEm, area: "RECEPÇÃO" }, ...(p.paginas ?? [])],
   };
 }
 
@@ -93,6 +97,12 @@ export async function colecaoPacientes() {
   const col = (await banco()).collection<Paciente>("pacientes");
   await umaVez("idx:pacientes", () => col.createIndex({ prontuario: 1 }, { unique: true }));
   await umaVez("migracao:atributos-6", () => migrarAtributos());
+  // Página 1 do diário para quem foi internado antes dela existir.
+  await umaVez("migracao:diario-p1", () =>
+    col.updateMany({ "paginas.n": { $ne: PAGINA_INICIAL } }, [
+      { $set: { paginas: { $concatArrays: [[{ n: PAGINA_INICIAL, em: "$criadoEm", area: "RECEPÇÃO" }], { $ifNull: ["$paginas", []] }] } } },
+    ]),
+  );
   return col;
 }
 
@@ -155,6 +165,7 @@ export async function criarPaciente(dados: NovoPaciente, senha: string): Promise
       emCurso: null,
       concluidas: {},
       diagnostico: "Em avaliação",
+      paginas: [{ n: PAGINA_INICIAL, em: agora, area: "RECEPÇÃO" }],
       anotacoes: [{ em: agora, autor: "Triagem", texto: "Internação registrada. Paciente aguarda avaliação da equipe." }],
     };
     try {

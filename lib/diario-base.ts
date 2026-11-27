@@ -14,6 +14,8 @@ export type Pagina = {
 
 export const TOTAL_PAGINAS = 12;
 export const ULTIMA = 13;
+/** Página que todo paciente já recebe na internação. */
+export const PAGINA_INICIAL = 1;
 /** Chance de achar uma página ao concluir uma ordem (na área da ordem). */
 export const CHANCE_PAGINA = 0.01;
 export const LIMITE_TEXTO_PAGINA = 400;

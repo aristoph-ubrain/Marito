@@ -127,7 +127,9 @@ export function EditorDiario({
                   <span className="text-[11px] leading-snug opacity-75">
                     {fim
                       ? "Última entrada: lacrada até o paciente juntar as 12 páginas. Área fixa."
-                      : fixa
+                      : p.n === 1
+                        ? "Todo paciente já começa com esta página (vem na ficha de internação). A área só aparece como registro."
+                        : fixa
                         ? "Esta página só é achada na Ala Zero (nível 8). Área fixa."
                         : "Mudar a área muda onde os pacientes ainda podem achar esta página."}
                   </span>

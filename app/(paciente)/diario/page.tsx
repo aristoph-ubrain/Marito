@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Carregando } from "@/components/Carregando";
 import { pacienteAtual } from "@/lib/dal";
-import { listarPaginas, TOTAL_PAGINAS, ULTIMA } from "@/lib/diario";
+import { listarPaginas, PAGINA_INICIAL, TOTAL_PAGINAS, ULTIMA } from "@/lib/diario";
 import { dataCurta } from "@/lib/regras";
 import { revelaAlaZero } from "@/lib/habilidades";
 import { DiarioEncontrado, type PaginaVista } from "./DiarioEncontrado";
@@ -23,7 +23,10 @@ async function Diario() {
           data: pg.data,
           texto: pg.texto,
           outra: pg.outra,
-          onde: pg.n === ULTIMA ? "Encontrada sob o colchão do quarto 112, depois da última página." : `Encontrada em: ${pg.area} · ${a ? dataCurta(new Date(a.em)) : ""} · ao concluir uma ordem de atividade`,
+          onde: pg.n === ULTIMA
+            ? "Encontrada sob o colchão do quarto 112, depois da última página."
+            : pg.n === PAGINA_INICIAL
+              ? "Estava dentro da sua ficha de internação, entre as folhas em branco." : `Encontrada em: ${pg.area} · ${a ? dataCurta(new Date(a.em)) : ""} · ao concluir uma ordem de atividade`,
         }
       : { n: pg.n, aberta: false, dica: pg.n === ULTIMA ? "LACRADA" : pg.area === "ALA ZERO" && !veAlaZero ? "ALA ████" : pg.area };
   });
