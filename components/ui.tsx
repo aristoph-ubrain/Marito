@@ -16,13 +16,21 @@ export function Papel({ children, faixa }: { children: ReactNode; faixa?: ReactN
   );
 }
 
-/** Selo do hospital. */
+/** Selo do hospital: carimbo redondo com a cruz trancada (fechadura). Um por página (id fixo do arco). */
 export function Selo({ tamanho = 44 }: { tamanho?: number }) {
   return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 44 44" aria-hidden="true" fill="none" stroke="#3a342a" strokeWidth="1.5">
-      <circle cx="22" cy="22" r="20" />
-      <circle cx="22" cy="22" r="15" strokeDasharray="2 2" />
-      <path d="M22 12v20M14 22h16" />
+    <svg width={tamanho} height={tamanho} viewBox="0 0 120 120" aria-hidden="true" fill="none" stroke="#3a342a" className="flex-none">
+      <defs>
+        <path id="selo-arco" d="M60 60 m-46 0 a46 46 0 1 1 92 0 a46 46 0 1 1 -92 0" />
+      </defs>
+      <circle cx="60" cy="60" r="56" strokeWidth="2.5" />
+      <circle cx="60" cy="60" r="38" strokeWidth="1.5" />
+      <text style={{ fontFamily: "var(--font-special-elite), monospace" }} fontSize="10.5" letterSpacing="2.2" fill="#3a342a" stroke="none">
+        <textPath href="#selo-arco">HOSPITAL MARITO · DESDE 1974 ·</textPath>
+      </text>
+      <path d="M51 30h18v21h21v18H69v21H51V69H30V51h21z" strokeWidth="2.2" />
+      <circle cx="60" cy="56" r="4.5" fill="#3a342a" stroke="none" />
+      <path d="M57.8 59.5 56 69h8l-1.8-9.5" fill="#3a342a" stroke="none" />
     </svg>
   );
 }
