@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/coordenacao/alas", rotulo: "ALAS" },
   { href: "/coordenacao/classes", rotulo: "CLASSES" },
   { href: "/coordenacao/diario", rotulo: "DIÁRIO" },
+  { href: "/coordenacao/entidades", rotulo: "ENTIDADES" },
   { href: "/coordenacao/chat", rotulo: "CHAT" },
 ];
 

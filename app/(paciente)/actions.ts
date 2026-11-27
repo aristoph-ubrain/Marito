@@ -28,6 +28,7 @@ import {
 } from "@/lib/habilidades";
 import type { Ordem } from "@/lib/ordens";
 import type { PacienteJogo } from "@/lib/pacientes";
+import { ehEntidade, listarEntidades, sortearEntidade, type Raridade } from "@/lib/entidades";
 
 export type Resposta = { ok: true; msg?: string } | { ok: false; erro: string };
 const SEM_SESSAO: Resposta = { ok: false, erro: "Sessão expirada. Entre novamente." };
@@ -446,5 +447,48 @@ export async function lerPaginaNova(): Promise<Resposta> {
   if (!prontuario) return SEM_SESSAO;
   await (await colecaoPacientes()).updateOne({ prontuario, paginaNova: { $ne: null } }, { $set: { paginaNova: null } });
   revalidatePath("/diario");
+  return { ok: true };
+}
+
+/* ---------- Entidades (Lua Negra) ---------- */
+
+export type ResultadoInvocacao =
+  | { ok: true; id: string; eco: boolean; nome: string; raridade: Raridade; descricao: string }
+  | { ok: false; erro: string };
+
+/** Queima uma Lua Negra e invoca uma entidade (sorteio no servidor). */
+export async function invocarEntidade(): Promise<ResultadoInvocacao> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return { ok: false, erro: "Sessão expirada. Entre novamente." };
+  const ent = sortearEntidade(Math.random(), Math.random());
+  let eco = false;
+  const editada = (await listarEntidades()).find((e) => e.id === ent.id) ?? ent;
+  const nome = editada.nome;
+  const r = await mutarPaciente(prontuario, (p, agora) => {
+    if (p.luas < 1) return { erro: "Nenhuma Lua Negra guardada." };
+    const vezes = (p.entidades[ent.id] ?? 0) + 1;
+    eco = vezes > 1;
+    return {
+      set: { luas: p.luas - 1, entidades: { ...p.entidades, [ent.id]: vezes }, ...(p.acompanhante ? {} : { acompanhante: ent.id }) },
+      historico: [{ em: agora, tipo: "ev", codigo: "EV-ENT", texto: eco ? `Eco de entidade: ${nome} (×${vezes}).` : `Entidade invocada: ${nome}.` }],
+    };
+  });
+  if (!r.ok) return { ok: false, erro: r.erro };
+  revalidatePath("/", "layout");
+  return { ok: true, id: ent.id, eco, nome, raridade: ent.raridade, descricao: editada.descricao };
+}
+
+/** Escolhe a entidade que acompanha a ficha (null = nenhuma). */
+export async function escolherAcompanhante(id: string | null): Promise<Resposta> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return SEM_SESSAO;
+  if (id !== null && !ehEntidade(id)) return { ok: false, erro: "Entidade inválida." };
+  const r = await mutarPaciente(prontuario, (p) => {
+    if (id && !p.entidades[id]) return { erro: "Você ainda não invocou esta entidade." };
+    if ((p.acompanhante ?? null) === id) return null;
+    return { set: { acompanhante: id } };
+  });
+  if (!r.ok) return { ok: false, erro: r.erro };
+  revalidatePath("/", "layout");
   return { ok: true };
 }

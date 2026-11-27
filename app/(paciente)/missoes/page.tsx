@@ -37,6 +37,7 @@ async function Quadro() {
       repetirAtivo={!!p.automacoes.repetir && automacaoLiberada("repetir", p.atributos)}
       fila={p.fila.map((f) => ({ codigo: f.codigo, titulo: f.titulo }))}
       paginaNova={pagina}
+      luas={p.luas}
       emCurso={p.emCurso ? { codigo: p.emCurso.codigo, inicio: new Date(p.emCurso.inicio).getTime(), duracao: p.emCurso.duracao } : null}
     />
   );

@@ -16,6 +16,7 @@ import {
 } from "./regras";
 import { CHAVES } from "./atributos";
 import { CHANCE_PAGINA, proximaPagina } from "./diario-base";
+import { CHANCE_LUA } from "./entidades-base";
 import { paginasPorArea } from "./diario";
 import { automacaoLiberada, chanceDobro, distribuirPorPlano, resumoDistribuicao, tetoOfflineMin } from "./habilidades";
 
@@ -111,6 +112,10 @@ export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto =
   let acasos: NovoRegistro | null = null;
   let paginas = p.paginas;
   let paginaNova = p.paginaNova ?? null;
+  let luas = p.luas;
+  let luasNovas = 0;
+  let luaReg: NovoRegistro | null = null;
+  let luaDia = "";
   let n = 0;
   while (em && missaoConcluida(new Date(em.inicio), em.duracao, agora) && n++ < MAX_CONCLUSOES) {
     const fim = new Date(new Date(em.inicio).getTime() + em.duracao * 1000);
@@ -146,6 +151,18 @@ export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto =
       historico.push({ em: new Date(fim.getTime() + 2), tipo: "ac", codigo: `DI-${dois(n)}`, texto: `Página ${dois(n)} de um diário encontrada (${em.ala}).` });
     }
 
+    // Lua Negra: 10% por ordem concluída, em qualquer área. Agrupada por dia no histórico.
+    if (Math.random() < CHANCE_LUA) {
+      luas += 1;
+      luasNovas += 1;
+      const dia = diaBrasilia(fim);
+      if (luaReg && luaDia === dia) Object.assign(luaReg, { em: fim, vezes: (luaReg.vezes ?? 1) + 1 });
+      else {
+        luaDia = dia;
+        historico.push((luaReg = { em: new Date(fim.getTime() + 3), tipo: "ac", codigo: "LN", texto: "Uma Lua Negra entre os papéis de uma ordem.", vezes: 1 }));
+      }
+    }
+
     // Próxima: primeiro a fila, depois a repetição. Nada começa depois do teto offline.
     const podeAuto = fim.getTime() <= limiteAuto;
     if (podeAuto && auto.fila && automacaoLiberada("fila", atr) && fila.length) {
@@ -158,6 +175,8 @@ export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto =
   }
   if (n > 0) {
     if (paginas !== p.paginas) Object.assign(set, { paginas, paginaNova });
+    if (luasNovas)
+      Object.assign(set, { luas, luasRecebidas: [...p.luasRecebidas, { em: agora, origem: "missao" as const, qtd: luasNovas }].slice(-20) });
     Object.assign(set, {
       emCurso: em,
       fila,

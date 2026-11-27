@@ -1,4 +1,5 @@
 import { listarClasses } from "./classes";
+import { listarEntidades } from "./entidades";
 import { banco, umaVez } from "./db";
 import { buscarPaciente, colecaoPacientes, normalizar } from "./pacientes";
 import { diaBrasilia, dois } from "./regras";
@@ -20,6 +21,8 @@ export type Colega = {
   atributos: (number | "?")[];
   classe: string;
   classeCor: string; // cor do carimbo da classe
+  acompanhante: { id: string; nome: string } | null; // entidade que acompanha a ficha
+  entidades: number; // quantas entidades diferentes já invocou
   foto?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 };
 
@@ -40,6 +43,8 @@ const FANTASMA: Colega = {
   atributos: Array(6).fill("?"),
   classe: "███████",
   classeCor: "var(--color-tinta)",
+  acompanhante: null,
+  entidades: 8,
 };
 
 /** Lista amigos, pedidos recebidos e enviados do paciente `eu`. Só expõe dados públicos. */
@@ -55,6 +60,7 @@ export async function listarConvivio(eu: string) {
     ? await (await colecaoPacientes()).find({ prontuario: { $in: ids } }, { projection: { _id: 0, senhaHash: 0 } }).toArray()
     : [];
   const cores = new Map((await listarClasses()).map((c) => [c.nome, c.cor]));
+  const nomesEnt = new Map((await listarEntidades()).map((e) => [e.id, e.nome]));
   const publico = (id: string): Colega | null => {
     const d = docs.find((x) => x.prontuario === id);
     if (!d) return null;
@@ -69,6 +75,8 @@ export async function listarConvivio(eu: string) {
       atributos: Object.values(p.atributos),
       classe: p.classe,
       classeCor: cores.get(p.classe) ?? "var(--color-tinta)",
+      acompanhante: p.acompanhante && p.entidades[p.acompanhante] ? { id: p.acompanhante, nome: nomesEnt.get(p.acompanhante) ?? "" } : null,
+      entidades: Object.keys(p.entidades).length,
       foto: p.foto,
     };
   };

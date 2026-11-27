@@ -36,6 +36,7 @@ export function QuadroMissoes({
   repetirAtivo,
   fila,
   paginaNova,
+  luas,
   emCurso,
 }: {
   prontuario: string;
@@ -51,6 +52,7 @@ export function QuadroMissoes({
   repetirAtivo: boolean;
   fila: { codigo: string; titulo: string }[];
   paginaNova: PaginaNova | null;
+  luas: number;
   emCurso: EmCurso | null;
 }) {
   const router = useRouter();
@@ -76,6 +78,14 @@ export function QuadroMissoes({
     setAnterior({ nivel, xp });
     if (nivel > anterior.nivel) setAviso({ chave: `n${nivel}`, texto: `NÍVEL ${dois(nivel)} · +${PONTOS_POR_NIVEL * (nivel - anterior.nivel)} PONTOS`, nivel: true });
     else if (xp > anterior.xp) setAviso({ chave: `x${nivel}-${xp}`, texto: `+${milhar(xp - anterior.xp)} XP`, nivel: false });
+  }
+
+  // Lua Negra achada: mesmo padrão (compara com a renderização anterior).
+  const [luasAntes, setLuasAntes] = useState(luas);
+  const [luaNova, setLuaNova] = useState<{ chave: number; n: number } | null>(null);
+  if (luasAntes !== luas) {
+    setLuasAntes(luas);
+    if (luas > luasAntes) setLuaNova({ chave: luas, n: luas - luasAntes });
   }
 
   // Diferença entre o relógio do aparelho e o do servidor (corrige celulares com hora errada).
@@ -155,6 +165,13 @@ export function QuadroMissoes({
           A atividade continua mesmo com o sistema fechado. Duração e recompensa já contam as suas habilidades.
         </p>
         <div className="relative flex flex-col gap-2 border-2 border-tinta px-3 py-2.5">
+          {luaNova && (
+            <Link key={`lua${luaNova.chave}`} href="/entidades" role="status"
+              className="anim-entra absolute -top-3 left-3 flex items-center gap-1.5 bg-papel px-1.5 font-maquina text-sm text-[#3a3440] no-underline">
+              <span aria-hidden="true" className="inline-block h-3.5 w-3.5 rounded-full" style={{ background: "radial-gradient(circle at 38% 36%,#3a3440 0 30%,#141018 70%)" }} />
+              +{luaNova.n} LUA NEGRA
+            </Link>
+          )}
           {aviso && !aviso.nivel && (
             <span key={aviso.chave} role="status" className="anim-ganho absolute -top-3 right-3 bg-papel px-1 font-maquina text-base text-verde">{aviso.texto}</span>
           )}

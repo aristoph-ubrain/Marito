@@ -8,6 +8,8 @@ import { ATRIBUTOS } from "@/lib/atributos";
 import { pacienteAtual } from "@/lib/dal";
 import { revelaTarjas } from "@/lib/habilidades";
 import { classePorNome } from "@/lib/classes";
+import { listarEntidades } from "@/lib/entidades";
+import { DesenhoEntidade } from "@/components/Entidade";
 import { dataCurta, dois, milhar, xpParaProximoNivel } from "@/lib/regras";
 
 const SEXO = { M: "M", F: "F", O: "Outro" } as const;
@@ -18,6 +20,7 @@ async function Ficha() {
   const agora = new Date(); // a página já é dinâmica (lê a sessão)
   const amanha = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
   const semTarja = revelaTarjas(p.atributos); // Vínculo 15
+  const acomp = p.acompanhante && p.entidades[p.acompanhante] ? (await listarEntidades()).find((e) => e.id === p.acompanhante) : undefined;
   const [classe, anterior] = await Promise.all([classePorNome(p.classe), p.classeAnterior ? classePorNome(p.classeAnterior) : null]);
   const anotacoes = [...p.anotacoes].sort((a, b) => new Date(a.em).getTime() - new Date(b.em).getTime());
 
@@ -67,6 +70,19 @@ async function Ficha() {
           </p>
         )}
       </section>
+
+      {acomp && (
+        <Link href="/entidades" className="flex items-center gap-2.5 border-[1.5px] border-tinta bg-papel-claro p-2.5 text-tinta no-underline">
+          <span className="flex h-14 w-14 flex-none items-center justify-center rounded-full border-[1.5px] border-dashed border-tinta bg-[#f4efe2]">
+            <DesenhoEntidade id={acomp.id} tamanho={46} />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-[10px] tracking-[1px]">ACOMPANHANTE</span>
+            <b className="font-maquina text-[15px] font-normal">{acomp.nome}</b>
+            <span className="text-[11px] leading-snug opacity-80">{acomp.descricao}</span>
+          </span>
+        </Link>
+      )}
 
       <section className="flex flex-col gap-2 text-sm leading-snug">
         <Titulo>II. HISTÓRICO CLÍNICO</Titulo>

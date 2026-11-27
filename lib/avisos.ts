@@ -8,7 +8,7 @@ import { banco, umaVez } from "./db";
 import { buscarPaciente, colecaoPacientes } from "./pacientes";
 import { dataCurta, diaBrasilia, horaBrasilia } from "./regras";
 
-export type Aviso = { tipo: "convivio" | "chat" | "area" | "equipe" | "classe" | "diario"; texto: string; detalhe?: string; href: string };
+export type Aviso = { tipo: "convivio" | "chat" | "area" | "equipe" | "classe" | "diario" | "lua"; texto: string; detalhe?: string; href: string };
 export type Avisos = { desde: string; itens: Aviso[]; linha0317: string | null };
 
 async function colecaoAreas() {
@@ -51,6 +51,19 @@ export async function listarAvisos(eu: string): Promise<Avisos | null> {
       texto: plural(achadas.length, "página do diário encontrada", "páginas do diário encontradas"),
       detalhe: achadas.map((x) => `Pág. ${String(x.n).padStart(2, "0")} · ${x.area}`).join(" · "),
       href: "/diario",
+    });
+  }
+
+  // Luas Negras: achadas nas ordens ou deixadas pela coordenação.
+  const luas = p.luasRecebidas.filter((x) => new Date(x.em) > desde);
+  const achadasLua = luas.filter((x) => x.origem === "missao").reduce((s, x) => s + x.qtd, 0);
+  const deixadas = luas.filter((x) => x.origem === "mestre").reduce((s, x) => s + x.qtd, 0);
+  if (achadasLua || deixadas) {
+    itens.push({
+      tipo: "lua",
+      texto: [achadasLua ? plural(achadasLua, "Lua Negra achada nas ordens", "Luas Negras achadas nas ordens") : "", deixadas ? `${deixadas === 1 ? "uma lua foi deixada" : `${deixadas} luas foram deixadas`} no seu leito` : ""].filter(Boolean).join(" · "),
+      detalhe: `Guardadas: ${p.luas}`,
+      href: "/entidades",
     });
   }
 

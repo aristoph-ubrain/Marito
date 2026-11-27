@@ -81,6 +81,10 @@ export default function TutorialPage() {
             Às vezes, entre os papéis de uma ordem concluída, aparece uma <b>página de diário</b> de 1974. Cada área guarda páginas
             diferentes. Junte as 12 na aba <b>DIÁRIO</b>.
           </p>
+          <p className="m-0">
+            Em uma a cada dez ordens fica para trás uma <b>Lua Negra</b>. Queime-a na aba <b>ENTIDADES</b> para invocar uma entidade e
+            escolha qual acompanha a sua ficha. São só coleção: não mudam XP nem missões.
+          </p>
         </Passo>
 
         <Passo n={4} titulo="NÍVEIS">

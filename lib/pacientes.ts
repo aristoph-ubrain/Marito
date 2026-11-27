@@ -59,10 +59,14 @@ export type Paciente = {
   classeMotivo?: string;
   paginas?: PaginaAchada[]; // páginas do diário encontradas
   paginaNova?: number | null; // achada e ainda não lida (aviso no diário)
+  luas?: number; // Luas Negras guardadas (invocam entidades)
+  luasRecebidas?: { em: Date; origem: "missao" | "mestre"; qtd: number }[]; // para os avisos (últimas 20)
+  entidades?: Record<string, number>; // id → vezes invocada (acima de 1 = ecos)
+  acompanhante?: string | null; // entidade mostrada na ficha
 };
 
 /** Paciente com todos os campos de jogo preenchidos. */
-type Opcionais = "recusou0112" | "aceitou0112" | "foto" | "avisosVistosEm" | "classeAnterior" | "classeEm" | "classeMotivo" | "paginaNova";
+type Opcionais = "recusou0112" | "aceitou0112" | "foto" | "avisosVistosEm" | "classeAnterior" | "classeEm" | "classeMotivo" | "paginaNova" | "acompanhante";
 export type PacienteJogo = Required<Omit<Paciente, Opcionais | "emCurso">> & Pick<Paciente, Opcionais> & { emCurso: EmCurso | null };
 
 export function normalizar(p: Paciente): PacienteJogo {
@@ -88,6 +92,9 @@ export function normalizar(p: Paciente): PacienteJogo {
     paginas: p.paginas?.some((x) => x.n === PAGINA_INICIAL)
       ? p.paginas
       : [{ n: PAGINA_INICIAL, em: p.criadoEm, area: "RECEPÇÃO" }, ...(p.paginas ?? [])],
+    luas: p.luas ?? 0,
+    luasRecebidas: p.luasRecebidas ?? [],
+    entidades: p.entidades ?? {},
   };
 }
 
