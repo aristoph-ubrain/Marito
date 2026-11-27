@@ -13,11 +13,11 @@ export const MAX_LUAS_ENTREGA = 5;
 export const LIMITE_NOME_ENTIDADE = 32;
 export const LIMITE_DESCRICAO_ENTIDADE = 160;
 
-export const RARIDADES: Record<Raridade, { rotulo: string; cor: string; chance: number }> = {
-  comum: { rotulo: "COMUM", cor: "#5e5344", chance: 0.6 },
-  incomum: { rotulo: "INCOMUM", cor: "#2f5d46", chance: 0.28 },
-  rara: { rotulo: "RARA", cor: "#2c4a8a", chance: 0.1 },
-  lendaria: { rotulo: "LENDÁRIA", cor: "#8a3b2e", chance: 0.02 },
+export const RARIDADES: Record<Raridade, { rotulo: string; cor: string }> = {
+  comum: { rotulo: "COMUM", cor: "#5e5344" },
+  incomum: { rotulo: "INCOMUM", cor: "#2f5d46" },
+  rara: { rotulo: "RARA", cor: "#2c4a8a" },
+  lendaria: { rotulo: "LENDÁRIA", cor: "#8a3b2e" },
 };
 
 export const ENTIDADES_ORIGINAIS: Entidade[] = [
@@ -33,16 +33,34 @@ export const ENTIDADES_ORIGINAIS: Entidade[] = [
 
 export const ehEntidade = (id: unknown): id is string => typeof id === "string" && ENTIDADES_ORIGINAIS.some((e) => e.id === id);
 
-/** Sorteia a entidade: primeiro a raridade (60/28/10/2%), depois uma entidade dela. `r1` e `r2` entre 0 e 1. */
-export function sortearEntidade(r1: number, r2: number): Entidade {
-  let resto = r1;
-  let raridade: Raridade = "comum";
-  for (const [k, v] of Object.entries(RARIDADES) as [Raridade, { chance: number }][]) {
-    raridade = k;
-    if ((resto -= v.chance) < 0) break;
+/**
+ * Peso de cada entidade no sorteio (em % por Lua Negra). Somam 99: o sorteio é proporcional,
+ * então cada uma sai com peso/99 (ex.: comum 20/99 ≈ 20,2%, lendária 1/99 ≈ 1%).
+ */
+export const PESO_ENTIDADE: Record<string, number> = {
+  lencol: 20,
+  rato: 20,
+  mariposa: 20,
+  menino: 14,
+  gato: 14,
+  enfermeira: 5,
+  visitante: 5,
+  aquilo: 1,
+};
+const PESO_TOTAL = Object.values(PESO_ENTIDADE).reduce((s, n) => s + n, 0);
+
+/** Chance real de cada entidade por Lua Negra (0 a 1). */
+export const chanceEntidade = (id: string) => (PESO_ENTIDADE[id] ?? 0) / PESO_TOTAL;
+
+/** Sorteia a entidade pelo peso de cada uma. `r` entre 0 e 1 (o segundo número é ignorado). */
+export function sortearEntidade(r: number, _r2?: number): Entidade {
+  void _r2;
+  let resto = r * PESO_TOTAL;
+  for (const e of ENTIDADES_ORIGINAIS) {
+    resto -= PESO_ENTIDADE[e.id] ?? 0;
+    if (resto < 0) return e;
   }
-  const daRaridade = ENTIDADES_ORIGINAIS.filter((e) => e.raridade === raridade);
-  return daRaridade[Math.min(daRaridade.length - 1, Math.floor(r2 * daRaridade.length))];
+  return ENTIDADES_ORIGINAIS[0];
 }
 
 /** Desenho de cada entidade (conteúdo de um SVG 80×80). Conteúdo nosso, sem dados do usuário. */

@@ -224,7 +224,7 @@ export function ColecaoEntidades({ lista, luas, acompanhante }: { lista: Entidad
         </div>
         <p className="m-0 text-[11px] leading-snug opacity-75">
           Toque numa entidade para ela te seguir (toque de novo para dispensar). Repetidas viram ecos (×2, ×3): só contam.
-          Entidades são coleção: não mudam XP nem missões. Chances: comum 60% · incomum 28% · rara 10% · lendária 2%.
+          Entidades são coleção: não mudam XP nem missões. Chance por lua: cada comum 20% · cada incomum 14% · cada rara 5% · lendária 1%.
         </p>
       </section>
 
