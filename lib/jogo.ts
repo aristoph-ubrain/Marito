@@ -141,7 +141,7 @@ export function calcularPendencias(p: PacienteJogo, agora: Date, ctx: Contexto =
     const proxima = proximaPagina(paginas.map((x) => x.n));
     if (proxima && em.ala && (ctx.paginasPorArea[em.ala] ?? []).includes(proxima) && Math.random() < CHANCE_PAGINA) {
       const n = proxima;
-      paginas = [...paginas, { n, em: fim, area: em.ala! }];
+      paginas = [...paginas, { n, em: fim, area: em.ala!, os: em.codigo }];
       paginaNova = n;
       historico.push({ em: new Date(fim.getTime() + 2), tipo: "ac", codigo: `DI-${dois(n)}`, texto: `Página ${dois(n)} de um diário encontrada (${em.ala}).` });
     }

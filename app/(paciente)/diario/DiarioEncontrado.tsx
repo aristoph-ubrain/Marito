@@ -104,22 +104,33 @@ export function DiarioEncontrado({ paginas, achadas, nova }: { paginas: PaginaVi
   );
 }
 
-function FolhaAberta({
+/** Página aberta por cima da tela, como um bilhete. Usada no Diário e no aviso das Missões. */
+export function FolhaAberta({
   pagina,
   fechar,
   anterior,
   proxima,
+  navegar = true,
+  rodape,
 }: {
   pagina: Extract<PaginaVista, { aberta: true }>;
   fechar: () => void;
   anterior?: () => void;
   proxima?: () => void;
+  navegar?: boolean; // mostra ANTERIOR / PRÓXIMA
+  rodape?: React.ReactNode;
 }) {
   const fecharRef = useRef<HTMLButtonElement>(null);
+  // Guarda a função de fechar num ref: a tela de Missões re-renderiza a cada 250 ms (cronômetro),
+  // e o efeito abaixo (foco e Esc) deve rodar só ao abrir.
+  const aoFechar = useRef(fechar);
+  useEffect(() => {
+    aoFechar.current = fechar;
+  }, [fechar]);
   useEffect(() => {
     fecharRef.current?.focus();
     const tecla = (e: KeyboardEvent) => {
-      if (e.key === "Escape") fechar();
+      if (e.key === "Escape") aoFechar.current();
     };
     document.addEventListener("keydown", tecla);
     const rolagem = document.body.style.overflow;
@@ -128,7 +139,7 @@ function FolhaAberta({
       document.removeEventListener("keydown", tecla);
       document.body.style.overflow = rolagem;
     };
-  }, [fechar]);
+  }, []);
 
   const fim = pagina.n === ULTIMA;
   // Portal no body: o papel da página tem animação com transform, que prenderia o "fixed" dentro dele.
@@ -156,11 +167,13 @@ function FolhaAberta({
           )}
         </p>
         <div className="border-t border-dashed border-tinta pt-1.5 text-[11px] opacity-80">{pagina.onde}</div>
-        <div className="flex gap-2">
-          <button type="button" className="btn flex-1" disabled={!anterior} onClick={anterior}>← ANTERIOR</button>
-          <button type="button" className="btn flex-1" disabled={!proxima} onClick={proxima}>PRÓXIMA →</button>
-        </div>
-        <button type="button" className="btn" onClick={fechar}>GUARDAR NO DIÁRIO</button>
+        {navegar && (
+          <div className="flex gap-2">
+            <button type="button" className="btn flex-1" disabled={!anterior} onClick={anterior}>← ANTERIOR</button>
+            <button type="button" className="btn flex-1" disabled={!proxima} onClick={proxima}>PRÓXIMA →</button>
+          </div>
+        )}
+        {rodape ?? <button type="button" className="btn" onClick={fechar}>GUARDAR NO DIÁRIO</button>}
       </article>
     </div>,
     document.body,

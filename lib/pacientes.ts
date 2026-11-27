@@ -13,7 +13,7 @@ const HASH_FALSO = bcrypt.hashSync("prontuario-inexistente", 10);
 
 export type Anotacao = { em: Date; autor: string; texto: string };
 export type EmCurso = { codigo: string; titulo: string; inicio: Date; duracao: number; xp: number; ala?: string };
-export type PaginaAchada = { n: number; em: Date; area: string };
+export type PaginaAchada = { n: number; em: Date; area: string; os?: string }; // os: ordem em que foi achada
 /** Ordem na fila: duração e XP já com as habilidades aplicadas. */
 export type NaFila = Omit<EmCurso, "inicio">;
 

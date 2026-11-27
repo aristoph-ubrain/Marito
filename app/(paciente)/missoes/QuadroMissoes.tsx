@@ -6,7 +6,10 @@ import { Anotacao, BarraXp, Rodape, Titulo } from "@/components/ui";
 import type { Missao } from "@/lib/atributos";
 import { dois, duracaoTexto, milhar, mmss, PONTOS_POR_NIVEL, xpParaProximoNivel } from "@/lib/regras";
 import { duracaoComHabilidade, resumoHabilidades, TAMANHO_FILA, xpComHabilidade, type Valores } from "@/lib/habilidades";
-import { enfileirarMissao, iniciarMissao, interromperMissao, removerDaFila, sincronizar } from "../actions";
+import { enfileirarMissao, iniciarMissao, interromperMissao, lerPaginaNova, removerDaFila, sincronizar } from "../actions";
+import Link from "next/link";
+import { semMarcas } from "@/lib/diario-base";
+import { FolhaAberta } from "../diario/DiarioEncontrado";
 
 type Filtro = "todas" | "liberadas" | "bloqueadas" | "andamento";
 const FILTROS: [Filtro, string][] = [
@@ -17,6 +20,7 @@ const FILTROS: [Filtro, string][] = [
 ];
 
 type EmCurso = { codigo: string; inicio: number; duracao: number };
+type PaginaNova = { n: number; area: string; os: string | null; data: string; texto: string; outra: boolean };
 
 export function QuadroMissoes({
   prontuario,
@@ -31,6 +35,7 @@ export function QuadroMissoes({
   filaAtiva,
   repetirAtivo,
   fila,
+  paginaNova,
   emCurso,
 }: {
   prontuario: string;
@@ -45,6 +50,7 @@ export function QuadroMissoes({
   filaAtiva: boolean;
   repetirAtivo: boolean;
   fila: { codigo: string; titulo: string }[];
+  paginaNova: PaginaNova | null;
   emCurso: EmCurso | null;
 }) {
   const router = useRouter();
@@ -52,6 +58,16 @@ export function QuadroMissoes({
   const [prog, setProg] = useState({ codigo: "", p: 0 });
   const [erro, setErro] = useState("");
   const [ocupado, iniciar] = useTransition();
+  // Aviso de página do diário: some ao ler ou em DEPOIS (a página continua no Diário).
+  const [dispensada, setDispensada] = useState<number | null>(null);
+  const [lendo, setLendo] = useState<PaginaNova | null>(null);
+  const achado = paginaNova && paginaNova.n !== dispensada ? paginaNova : null;
+  const guardarPagina = (ler: boolean) => {
+    if (!achado) return;
+    setDispensada(achado.n);
+    if (ler) setLendo(achado);
+    void lerPaginaNova();
+  };
 
   // Feedback de XP e nível: compara com os valores da renderização anterior (padrão "estado anterior" do React).
   const [anterior, setAnterior] = useState({ nivel, xp });
@@ -160,6 +176,31 @@ export function QuadroMissoes({
             <span>Repetir: <b>{repetirAtivo ? "LIGADO" : "DESLIGADO"}</b></span>
           </div>
         </div>
+        {achado && (
+          <div role="status" key={achado.n} className="anim-desdobra relative flex flex-col gap-1.5 px-3 pt-2.5 pb-3 shadow-[0_4px_10px_rgba(0,0,0,.35)]"
+            style={{
+              background: "#efe1bd",
+              backgroundImage: "repeating-linear-gradient(180deg,transparent 0 23px,rgba(44,74,138,.16) 23px 24px)",
+              transform: "rotate(-1.5deg)",
+              ["--giro" as string]: "-1.5deg",
+            }}>
+            <span aria-hidden="true" className="absolute top-0 right-0 h-[22px] w-[22px]" style={{ background: "linear-gradient(225deg,var(--color-papel) 50%,rgba(0,0,0,.16) 50%)" }} />
+            <div className="flex items-baseline justify-between gap-2 pr-5">
+              <b className="font-maquina text-[15px] font-normal tracking-[.5px]">PÁGINA ENCONTRADA</b>
+              <span className="text-[11px]">Pág. {dois(achado.n)} / 12</span>
+            </div>
+            <span className="text-xs leading-snug">
+              Entre os papéis {achado.os ? <>da <b>{achado.os}</b> </> : "de uma ordem "}({achado.area}) havia uma folha arrancada de um diário.
+            </span>
+            <span className={`opacity-85 ${achado.outra ? "font-outra text-[13px] leading-relaxed text-[#3b2a2a]" : "font-mao text-[19px] leading-tight text-[#22325e]"}`}>
+              “{semMarcas(achado.texto).split(/\s+/).slice(0, 6).join(" ")}…”
+            </span>
+            <div className="flex justify-end gap-2">
+              <button type="button" className="btn min-h-10" onClick={() => guardarPagina(false)}>DEPOIS</button>
+              <button type="button" className="btn btn-escuro min-h-10" onClick={() => guardarPagina(true)} aria-haspopup="dialog">LER PÁGINA</button>
+            </div>
+          </div>
+        )}
         {filaAtiva && (
           <div className="flex flex-col gap-1.5 border-[1.5px] border-dashed border-tinta px-3 py-2 text-xs">
             <b className="tracking-[.5px]">FILA DE ORDENS ({fila.length}/{TAMANHO_FILA})</b>
@@ -257,6 +298,27 @@ export function QuadroMissoes({
           );
         })}
       </div>
+
+      {lendo && (
+        <FolhaAberta
+          pagina={{
+            n: lendo.n,
+            aberta: true,
+            data: lendo.data,
+            texto: lendo.texto,
+            outra: lendo.outra,
+            onde: `Encontrada em: ${lendo.area}${lendo.os ? ` · entre os papéis da ${lendo.os}` : ""}`,
+          }}
+          fechar={() => setLendo(null)}
+          navegar={false}
+          rodape={
+            <div className="flex gap-2">
+              <Link href="/diario" className="btn flex-1 no-underline">VER DIÁRIO →</Link>
+              <button type="button" className="btn flex-1" onClick={() => setLendo(null)}>GUARDAR</button>
+            </div>
+          }
+        />
+      )}
 
       <Rodape>
         Ordens emitidas pela coordenação. Atividades fora desta lista não devem ser realizadas, mesmo quando solicitadas por funcionários.
