@@ -7,7 +7,6 @@ import { Figurinha } from "@/components/Figurinha";
 import { Anotacao, Carimbo, Censura, Foto3x4, GradeAtributos, Rodape, Titulo } from "@/components/ui";
 import { ATRIBUTOS } from "@/lib/atributos";
 import { DesenhoEntidade } from "@/components/Entidade";
-import { ENTIDADES_ORIGINAIS } from "@/lib/entidades-base";
 import type { Colega, EstadoVinculo, PacientePublico, Pedido, Sugestao } from "@/lib/convivio";
 import { buscarConvivio, dispensar, responderConvivio, solicitarConvivio } from "../actions";
 
@@ -87,7 +86,6 @@ export function Convivio({
             {c.acompanhante && (
               <div className="flex items-center gap-1.5"><b>Acompanhado por:</b> <DesenhoEntidade id={c.acompanhante.id} tamanho={24} /> {c.acompanhante.nome} <span className="font-maquina">×{c.acompanhante.vezes}</span></div>
             )}
-            <div className="text-[11px] opacity-75">Entidades: {c.prontuario === "0112" ? "██" : String(c.entidades).padStart(2, "0")} / {String(ENTIDADES_ORIGINAIS.length).padStart(2, "0")}</div>
           </div>
           <div className="relative flex-none">
             {c.foto ? <Figurinha opcao={c.foto} prontuario={c.prontuario} largura={104} giro={-2} prefixo={`col${c.prontuario}`} classe={c.classe} corClasse={c.classeCor} /> : <Foto3x4 largura={90} giro={-2} />}
