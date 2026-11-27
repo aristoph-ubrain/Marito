@@ -6,13 +6,16 @@ import { DesenhoEntidade } from "@/components/Entidade";
 import { Anotacao, Rodape, Titulo } from "@/components/ui";
 import { CHANCE_LUA, ENTIDADES_ORIGINAIS, RARIDADES, type Raridade } from "@/lib/entidades-base";
 import { dois } from "@/lib/regras";
-import { escolherAcompanhante, invocarEntidade } from "../actions";
+import { escolherAcompanhante, invocarEntidade, invocarTodas, type ResultadoRitual } from "../actions";
 
 export type EntidadeVista =
   | { id: string; tem: true; nome: string; raridade: Raridade; descricao: string; vezes: number }
   | { id: null; tem: false };
 
-type Ritual = { fase: "queimando" } | { fase: "pronto"; id: string; eco: boolean; nome: string; raridade: Raridade; descricao: string };
+type Ritual =
+  | { fase: "queimando"; todas?: number }
+  | { fase: "pronto"; id: string; eco: boolean; nome: string; raridade: Raridade; descricao: string }
+  | { fase: "todas"; resultado: Extract<ResultadoRitual, { ok: true }> };
 
 /** Tempo do ritual antes de revelar (o resultado já veio do servidor; é só cena). */
 const ESPERA_MS = 1800;
@@ -44,6 +47,25 @@ export function ColecaoEntidades({ lista, luas, acompanhante }: { lista: Entidad
         setRitual({ fase: "pronto", id: r.id, eco: r.eco, nome: r.nome, raridade: r.raridade, descricao: r.descricao });
         router.refresh();
       }, Math.max(0, ESPERA_MS - (Date.now() - inicio)));
+    });
+  };
+
+  const invocarTudo = () => {
+    setErro("");
+    setRitual({ fase: "queimando", todas: luas });
+    const inicio = Date.now();
+    iniciar(async () => {
+      const r = await invocarTodas();
+      if (!r.ok) {
+        setRitual(null);
+        setErro(r.erro);
+        return;
+      }
+      clearTimeout(espera.current);
+      espera.current = setTimeout(() => {
+        setRitual({ fase: "todas", resultado: r });
+        router.refresh();
+      }, Math.max(0, ESPERA_MS + 600 - (Date.now() - inicio)));
     });
   };
 
@@ -79,13 +101,48 @@ export function ColecaoEntidades({ lista, luas, acompanhante }: { lista: Entidad
       <button type="button" className="btn btn-escuro min-h-[52px] text-sm tracking-[1.5px]" disabled={luas < 1 || ocupado || queimando} onClick={invocar}>
         {queimando ? "INVOCANDO…" : luas > 0 ? "QUEIMAR A LUA NEGRA" : "NENHUMA LUA NEGRA"}
       </button>
+      {luas > 1 && (
+        <button type="button" className="btn min-h-11 tracking-[1px]" disabled={ocupado || queimando} onClick={invocarTudo}>
+          QUEIMAR TODAS ({luas})
+        </button>
+      )}
       {erro && <p role="alert" className="m-0 text-xs text-carimbo">{erro}</p>}
 
       {ritual && (
         <div role="status" aria-live="polite" className="flex flex-col items-center gap-2.5 border-2 border-tinta bg-[#1c1714] p-4 text-center text-papel">
           <span className="text-[11px] tracking-[1.5px] opacity-80">
-            {ritual.fase === "queimando" ? "A LUA ESTÁ APAGANDO…" : ritual.eco ? "ECO · ELA JÁ ESTAVA AQUI" : "ENTIDADE INVOCADA"}
+            {ritual.fase === "queimando"
+              ? ritual.todas
+                ? `${ritual.todas} LUAS ESTÃO APAGANDO…`
+                : "A LUA ESTÁ APAGANDO…"
+              : ritual.fase === "todas"
+                ? `RITUAL DE ${ritual.resultado.queimadas} LUAS`
+                : ritual.eco
+                  ? "ECO · ELA JÁ ESTAVA AQUI"
+                  : "ENTIDADE INVOCADA"}
           </span>
+          {ritual.fase === "todas" ? (
+            <>
+              <ul className="m-0 grid w-full list-none grid-cols-3 gap-2 p-0">
+                {ritual.resultado.resultados.map((x) => (
+                  <li key={x.id} className="anim-revela relative flex flex-col items-center gap-1 border border-papel/40 px-1 py-1.5 text-[10px] leading-tight">
+                    {x.nova && <span className="absolute -top-2 left-1 bg-papel px-1 text-[8.5px] tracking-[1px] text-verde">NOVA</span>}
+                    {x.vezes > 1 && <span className="absolute top-0.5 right-1 text-[9px]">×{x.vezes}</span>}
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f4efe2]"><DesenhoEntidade id={x.id} tamanho={42} /></span>
+                    <span>{x.nome}</span>
+                    <span className="text-[8.5px] tracking-[1px]" style={{ color: RARIDADES[x.raridade].cor, filter: "brightness(1.8)" }}>{RARIDADES[x.raridade].rotulo}</span>
+                  </li>
+                ))}
+              </ul>
+              <span className="text-xs opacity-90">
+                {ritual.resultado.resultados.filter((x) => x.nova).length
+                  ? `${ritual.resultado.resultados.filter((x) => x.nova).length} nova(s) na coleção. O resto virou eco.`
+                  : "Nenhuma nova. Todas já estavam aqui."}
+              </span>
+              <button type="button" className="btn w-full border-papel text-papel" onClick={() => setRitual(null)}>GUARDAR</button>
+            </>
+          ) : (
+          <>
           <div className="flex h-[150px] w-[150px] items-center justify-center rounded-full border-[1.5px] border-dashed border-papel/60 motion-safe:animate-[spin_6s_linear_infinite]">
             {ritual.fase === "queimando" ? (
               <span className="h-[52px] w-[52px] rounded-full border-[1.5px] border-papel bg-[#141018]" />
@@ -108,6 +165,8 @@ export function ColecaoEntidades({ lista, luas, acompanhante }: { lista: Entidad
             </>
           ) : (
             <span className="text-xs opacity-90">Não desvie o olhar.</span>
+          )}
+          </>
           )}
         </div>
       )}

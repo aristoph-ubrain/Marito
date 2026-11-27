@@ -492,3 +492,48 @@ export async function escolherAcompanhante(id: string | null): Promise<Resposta>
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+export type ResultadoRitual =
+  | { ok: true; queimadas: number; resultados: { id: string; nome: string; raridade: Raridade; vezes: number; nova: boolean }[] }
+  | { ok: false; erro: string };
+
+/** Queima todas as Luas Negras de uma vez: uma invocação por lua, resumo por entidade. */
+export async function invocarTodas(): Promise<ResultadoRitual> {
+  const prontuario = await prontuarioDaSessao();
+  if (!prontuario) return { ok: false, erro: "Sessão expirada. Entre novamente." };
+  const nomes = await listarEntidades();
+  let resultados: { id: string; nome: string; raridade: Raridade; vezes: number; nova: boolean }[] = [];
+  let queimadas = 0;
+  const r = await mutarPaciente(prontuario, (p, agora) => {
+    if (p.luas < 1) return { erro: "Nenhuma Lua Negra guardada." };
+    queimadas = p.luas;
+    const entidades = { ...p.entidades };
+    const contagem = new Map<string, number>();
+    for (let i = 0; i < p.luas; i++) {
+      const e = sortearEntidade(Math.random(), Math.random());
+      contagem.set(e.id, (contagem.get(e.id) ?? 0) + 1);
+    }
+    resultados = [...contagem.entries()].map(([id, vezes]) => {
+      const e = nomes.find((x) => x.id === id)!;
+      const nova = !entidades[id];
+      entidades[id] = (entidades[id] ?? 0) + vezes;
+      return { id, nome: e.nome, raridade: e.raridade, vezes, nova };
+    });
+    const novas = resultados.filter((x) => x.nova);
+    const primeira = novas[0]?.id ?? resultados[0].id;
+    return {
+      set: { luas: 0, entidades, ...(p.acompanhante ? {} : { acompanhante: primeira }) },
+      historico: [{
+        em: agora,
+        tipo: "ev",
+        codigo: "EV-ENT",
+        texto: `Ritual de ${p.luas} luas: ${resultados.map((x) => `${x.nome}${x.vezes > 1 ? ` ×${x.vezes}` : ""}`).join(", ")}.`,
+      }],
+    };
+  });
+  if (!r.ok) return { ok: false, erro: r.erro };
+  revalidatePath("/", "layout");
+  const ordem = ["lendaria", "rara", "incomum", "comum"];
+  resultados.sort((a, b) => Number(b.nova) - Number(a.nova) || ordem.indexOf(a.raridade) - ordem.indexOf(b.raridade));
+  return { ok: true, queimadas, resultados };
+}
