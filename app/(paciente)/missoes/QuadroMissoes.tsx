@@ -6,7 +6,16 @@ import { Anotacao, BarraXp, Rodape, Titulo } from "@/components/ui";
 import type { Missao } from "@/lib/atributos";
 import { dois, duracaoTexto, milhar, mmss, PONTOS_POR_NIVEL, xpParaProximoNivel } from "@/lib/regras";
 import { duracaoComHabilidade, resumoHabilidades, TAMANHO_FILA, xpComHabilidade, type Valores } from "@/lib/habilidades";
-import { alternarAutomacao, enfileirarMissao, iniciarMissao, interromperMissao, lerPaginaNova, removerDaFila, sincronizar } from "../actions";
+import {
+  alternarAutomacao,
+  enfileirarMissao,
+  iniciarMissao,
+  interromperMissao,
+  lerPaginaNova,
+  removerDaFila,
+  sincronizar,
+  type EstadoMissoes,
+} from "../actions";
 import Link from "next/link";
 import { semMarcas } from "@/lib/diario-base";
 import { FolhaAberta } from "../diario/DiarioEncontrado";
@@ -20,16 +29,18 @@ const FILTROS: [Filtro, string][] = [
 ];
 
 type EmCurso = { codigo: string; inicio: number; duracao: number };
+/** Com Repetir ligado, de quanto em quanto tempo o servidor registra os ciclos (a tela conta sozinha no meio). */
+const SYNC_REPETIR_MS = 90_000;
 type PaginaNova = { n: number; area: string; os: string | null; data: string; texto: string; outra: boolean };
 
 export function QuadroMissoes({
   prontuario,
   agoraServidor,
   missoes,
-  nivel,
-  xp,
-  feitasHoje,
-  concluidas,
+  nivel: nivelServ,
+  xp: xpServ,
+  feitasHoje: feitasServ,
+  concluidas: concluidasServ,
   alasFechadas,
   atributos,
   filaAtiva,
@@ -37,8 +48,8 @@ export function QuadroMissoes({
   repetirLiberado,
   fila,
   paginaNova,
-  luas,
-  emCurso,
+  luas: luasServ,
+  emCurso: emCursoServ,
 }: {
   prontuario: string;
   agoraServidor: number;
@@ -58,6 +69,16 @@ export function QuadroMissoes({
   emCurso: EmCurso | null;
 }) {
   const router = useRouter();
+  // Estado "ao vivo": começa com o que a página trouxe e é atualizado pelas respostas do servidor
+  // (sincronizar), sem recarregar a página. Uma página nova (agoraServidor muda) recomeça dele.
+  const doServidor = (): EstadoMissoes => ({ nivel: nivelServ, xp: xpServ, feitasHoje: feitasServ, concluidas: concluidasServ, emCurso: emCursoServ, luas: luasServ });
+  const [vivo, setVivo] = useState<EstadoMissoes>(doServidor);
+  const [carimbo, setCarimbo] = useState(agoraServidor);
+  if (carimbo !== agoraServidor) {
+    setCarimbo(agoraServidor);
+    setVivo(doServidor());
+  }
+  const { nivel, xp, feitasHoje, concluidas, emCurso, luas } = vivo;
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [prog, setProg] = useState({ codigo: "", p: 0 });
   const [erro, setErro] = useState("");
@@ -102,42 +123,88 @@ export function QuadroMissoes({
   const inicioEmCurso = emCurso?.inicio;
   const duracaoEmCurso = emCurso?.duracao;
 
+  // Com Repetir ligado e fila vazia, os ciclos são contados aqui mesmo (a duração não muda),
+  // e o servidor só é chamado a cada SYNC_REPETIR_MS. Sem repetir, chama quando a missão termina.
+  const repeteLocal = repetirAtivo && fila.length === 0;
+  const [ciclos, setCiclos] = useState({ chave: "", n: 0 });
+
   // Cronômetro só de exibição: quem decide se a missão terminou é o servidor (pelo horário de início).
+  // Com a aba escondida nada roda; ao voltar, uma chamada só recupera tudo.
   useEffect(() => {
     if (!codigoEmCurso || inicioEmCurso === undefined || duracaoEmCurso === undefined) return;
+    const chave = `${codigoEmCurso}@${inicioEmCurso}`;
+    const durMs = duracaoEmCurso * 1000;
     let ativo = true;
     let espera: ReturnType<typeof setTimeout> | undefined;
+    let relogio: ReturnType<typeof setInterval> | undefined;
     let tentativas = 0;
+    let chamando = false;
+    let ultimaChamada = Date.now();
+
     const conferir = () => {
+      if (chamando || document.hidden) return;
+      chamando = true;
+      ultimaChamada = Date.now();
       sincronizar()
         .then((r) => {
+          chamando = false;
           if (!ativo) return;
-          if (r.ok && "restanteMs" in r && r.restanteMs) {
+          tentativas = 0;
+          if (r.ok && r.restanteMs) {
             espera = setTimeout(conferir, Math.max(500, r.restanteMs)); // o servidor diz que ainda falta
-          } else {
-            router.refresh();
+            return;
           }
+          if (r.ok && r.estado) setVivo(r.estado);
+          if (r.ok && r.recarregar) router.refresh();
         })
         .catch(() => {
+          chamando = false;
           if (!ativo) return;
           tentativas += 1;
           espera = setTimeout(conferir, Math.min(30000, 2000 * 2 ** tentativas)); // rede falhou: tenta de novo
         });
     };
-    const id = setInterval(() => {
-      const p = Math.min(1, (Date.now() + desvio - inicioEmCurso) / (duracaoEmCurso * 1000));
-      setProg({ codigo: `${codigoEmCurso}@${inicioEmCurso}`, p });
-      if (p >= 1) {
-        clearInterval(id);
-        conferir();
+
+    const tique = () => {
+      const passou = Date.now() + desvio - inicioEmCurso;
+      if (repeteLocal) {
+        const n = Math.max(0, Math.floor(passou / durMs));
+        setProg({ codigo: chave, p: (passou % durMs) / durMs });
+        setCiclos({ chave, n });
+        if (n > 0 && Date.now() - ultimaChamada >= SYNC_REPETIR_MS) conferir();
+      } else {
+        const p = Math.min(1, passou / durMs);
+        setProg({ codigo: chave, p });
+        if (p >= 1) {
+          clearInterval(relogio);
+          relogio = undefined;
+          conferir();
+        }
       }
-    }, 250);
+    };
+    const ligar = () => {
+      if (relogio || document.hidden) return;
+      relogio = setInterval(tique, 250);
+    };
+    const visibilidade = () => {
+      if (document.hidden) {
+        clearInterval(relogio);
+        relogio = undefined;
+        return;
+      }
+      // Voltou para a aba: se algo terminou enquanto estava escondida, uma chamada resolve tudo.
+      if (Date.now() + desvio - inicioEmCurso >= durMs) conferir();
+      ligar();
+    };
+    ligar();
+    document.addEventListener("visibilitychange", visibilidade);
     return () => {
       ativo = false;
-      clearInterval(id);
+      clearInterval(relogio);
       if (espera) clearTimeout(espera);
+      document.removeEventListener("visibilitychange", visibilidade);
     };
-  }, [codigoEmCurso, inicioEmCurso, duracaoEmCurso, desvio, router]);
+  }, [codigoEmCurso, inicioEmCurso, duracaoEmCurso, desvio, router, repeteLocal]);
 
   const executar = (acao: () => Promise<{ ok: boolean; erro?: string }>) => {
     setErro("");
@@ -297,7 +364,12 @@ export function QuadroMissoes({
                     <div className="h-full bg-verde transition-[width] duration-200 ease-linear" style={{ width: `${Math.round(progresso * 100)}%` }} />
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span>{progresso >= 1 ? "CONCLUINDO…" : `EM ANDAMENTO · restam ${mmss((1 - progresso) * emCurso.duracao)}`}</span>
+                    <span className="flex flex-col">
+                      <span>{progresso >= 1 ? "CONCLUINDO…" : `EM ANDAMENTO · restam ${mmss((1 - progresso) * emCurso.duracao)}`}</span>
+                      {repeteLocal && ciclos.chave === `${emCurso.codigo}@${emCurso.inicio}` && ciclos.n > 0 && (
+                        <span className="text-[11px] opacity-75">REPETINDO · +{ciclos.n} {ciclos.n === 1 ? "ciclo" : "ciclos"} a registrar</span>
+                      )}
+                    </span>
                     <button type="button" className="btn" disabled={ocupado || progresso >= 1} onClick={() => executar(interromperMissao)}>
                       INTERROMPER
                     </button>

@@ -28,7 +28,9 @@ export const tetoOfflineMin = (a: Valores) => TETO_BASE_MIN + Math.floor(a.VIT /
 /** SOR: 0,5% de chance por ponto de a missão contar duas vezes. */
 export const chanceDobro = (a: Valores) => Math.min(1, Math.max(0, a.SOR) * 0.005);
 
-export const duracaoComHabilidade = (duracao: number, a: Valores) => Math.max(1, Math.round(duracao * (1 - reducaoDuracao(a))));
+/** Nenhuma missão fica mais curta que isto, seja qual for a AGI. */
+export const DURACAO_MINIMA_S = 5;
+export const duracaoComHabilidade = (duracao: number, a: Valores) => Math.max(DURACAO_MINIMA_S, Math.round(duracao * (1 - reducaoDuracao(a))));
 export const xpComHabilidade = (xp: number, duracaoBase: number, a: Valores) => Math.round(xp * (1 + bonusXp(a, duracaoBase)));
 
 /* ---------- Automações (marcos) ---------- */

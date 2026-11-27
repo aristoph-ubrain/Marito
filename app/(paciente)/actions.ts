@@ -209,26 +209,61 @@ export async function interromperMissao(): Promise<Resposta> {
   return { ok: true };
 }
 
-/** Chamado pelo cronômetro do navegador ao zerar: o servidor confere o horário e conclui. */
-export async function sincronizar(): Promise<Resposta & { restanteMs?: number }> {
+/** O que a tela de Missões precisa para se atualizar sem recarregar a página. */
+export type EstadoMissoes = {
+  nivel: number;
+  xp: number;
+  feitasHoje: number;
+  concluidas: Record<string, number>;
+  emCurso: { codigo: string; inicio: number; duracao: number } | null;
+  luas: number;
+};
+
+/**
+ * Chamado pelo cronômetro do navegador: o servidor confere o horário e conclui o que terminou
+ * (inclusive várias repetições de uma vez). Devolve o estado novo para a tela se atualizar sozinha;
+ * `recarregar` só quando muda algo que a tela não sabe montar (nível, fila, página do diário).
+ */
+export async function sincronizar(): Promise<Resposta & { restanteMs?: number; estado?: EstadoMissoes; recarregar?: boolean }> {
   const prontuario = await prontuarioDaSessao();
   if (!prontuario) return SEM_SESSAO;
   let mudou = false;
+  let recarregar = false;
   const r = await mutarPaciente(prontuario, (p, agora, ctx) => {
     const pend = calcularPendencias(p, agora, ctx);
     mudou = !!pend && !("erro" in pend) && pend.set.emCurso !== undefined;
+    if (pend && !("erro" in pend)) {
+      const d = pend.set;
+      recarregar =
+        (d.nivel !== undefined && d.nivel !== p.nivel) ||
+        (d.fila !== undefined && d.fila.length !== p.fila.length) ||
+        (d.paginaNova !== undefined && d.paginaNova !== p.paginaNova) ||
+        (d.atributos !== undefined);
+    }
     return pend;
   });
   if (!r.ok) return { ok: false, erro: r.erro };
-  const em = r.paciente.emCurso;
-  // Missão concluída (e talvez outra já começou pela fila ou repetição): a tela precisa recarregar.
+  const p = r.paciente;
+  const em = p.emCurso;
   if (em && !mudou) {
-    // Ainda não terminou pelo relógio do servidor: devolve quanto falta, sem revalidar.
+    // Ainda não terminou pelo relógio do servidor: devolve quanto falta.
     const restanteMs = new Date(em.inicio).getTime() + em.duracao * 1000 - Date.now();
     if (restanteMs > 0) return { ok: true, restanteMs };
   }
-  revalidatePath("/", "layout");
-  return { ok: true };
+  if (recarregar) revalidatePath("/", "layout");
+  const hoje = diaBrasilia(new Date());
+  return {
+    ok: true,
+    recarregar,
+    estado: {
+      nivel: p.nivel,
+      xp: p.xp,
+      feitasHoje: p.missoesHoje.dia === hoje ? p.missoesHoje.n : 0,
+      concluidas: p.concluidas,
+      emCurso: em ? { codigo: em.codigo, inicio: new Date(em.inicio).getTime(), duracao: em.duracao } : null,
+      luas: p.luas,
+    },
+  };
 }
 
 /* ---------- Alas ---------- */
