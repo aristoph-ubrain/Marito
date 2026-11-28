@@ -18,22 +18,22 @@ E às 03:17, todas as noites, alguém consulta o seu prontuário.
 
 **Hospital Marito** é um RPG idle de navegador, feito para celular, com terror psicológico sutil e a estética de um prontuário datilografado em papel velho: carimbos, tarjas pretas, anotações à caneta azul e um paciente de número **0112** que não tem internação registrada. Um **Mestre** conduz a história pelo painel da coordenação, como numa mesa de RPG.
 
-<!-- Galeria de telas: descomentar quando as capturas estiverem em docs/imagens/ (ficha, missoes, atributos, diario, entidades, coordenacao .png)
 ## Telas
 
 <table>
   <tr>
-    <td align="center"><img src="docs/imagens/ficha.png" width="230" alt="Ficha do paciente" /><br /><sub>Ficha do paciente</sub></td>
-    <td align="center"><img src="docs/imagens/missoes.png" width="230" alt="Ordens de atividade" /><br /><sub>Ordens de atividade</sub></td>
-    <td align="center"><img src="docs/imagens/atributos.png" width="230" alt="Atributos e habilidades" /><br /><sub>Atributos e habilidades</sub></td>
+    <td align="center"><img src="docs/imagens/ficha.jpg" width="230" alt="Ficha do paciente" /><br /><sub>Ficha do paciente</sub></td>
+    <td align="center"><img src="docs/imagens/missoes.jpg" width="230" alt="Ordens de atividade" /><br /><sub>Ordens de atividade</sub></td>
+    <td align="center"><img src="docs/imagens/atributos.jpg" width="230" alt="Atributos e habilidades" /><br /><sub>Atributos e habilidades</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/imagens/diario.png" width="230" alt="Diário encontrado" /><br /><sub>Diário encontrado</sub></td>
-    <td align="center"><img src="docs/imagens/entidades.png" width="230" alt="Entidades e Lua Negra" /><br /><sub>Entidades e Lua Negra</sub></td>
-    <td align="center"><img src="docs/imagens/coordenacao.png" width="230" alt="Painel da coordenação" /><br /><sub>Painel da coordenação</sub></td>
+    <td align="center"><img src="docs/imagens/diario.jpg" width="230" alt="Diário encontrado" /><br /><sub>Diário encontrado</sub></td>
+    <td align="center"><img src="docs/imagens/entidades.jpg" width="230" alt="Entidades e Lua Negra" /><br /><sub>Entidades e Lua Negra</sub></td>
+    <td align="center"><img src="docs/imagens/coordenacao.jpg" width="230" alt="Painel da coordenação" /><br /><sub>Painel da coordenação</sub></td>
   </tr>
 </table>
--->
+
+<sub>Telas do canvas de design do jogo.</sub>
 
 ## Sumário
 
